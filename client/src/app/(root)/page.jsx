@@ -1,52 +1,11 @@
-"use client";
+import { auth } from '@/lib/auth';
+import NewsfeedPage from './NewsFeedPage';
 
-import { useState } from 'react';
-import Header from '../../components/newsfeed/Header';
-import NewsFeed from '../../components/newsfeed/NewsFeed';
-import Sidebar from '../../components/newsfeed/Sidebar';
-import AddReportModal from '../../components/newsfeed/AddReportModal';
+// This is a Server Component, so it can be async
+export default async function Home() {
+  // 1. Fetch the session data on the server
+  const session = await auth();
 
-export default function Home() {
-  const [selectedCity, setSelectedCity] = useState('New York');
-  const [isAddReportOpen, setIsAddReportOpen] = useState(false);
-  const [filterType, setFilterType] = useState('all');
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      <Header 
-        selectedCity={selectedCity}
-        setSelectedCity={setSelectedCity}
-        onAddReport={() => setIsAddReportOpen(true)}
-      />
-
-      <h1>hello</h1>
-
-      <button className='btn'>Login </button>
-      
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          <div className="lg:col-span-1">
-            <Sidebar 
-              filterType={filterType}
-              setFilterType={setFilterType}
-              selectedCity={selectedCity}
-            />
-          </div>
-          
-          <div className="lg:col-span-3">
-            <NewsFeed 
-              selectedCity={selectedCity}
-              filterType={filterType}
-            />
-          </div>
-        </div>
-      </div>
-
-      <AddReportModal 
-        isOpen={isAddReportOpen}
-        onClose={() => setIsAddReportOpen(false)}
-        selectedCity={selectedCity}
-      />
-    </div>
-  );
+  // 2. Pass the session data as a prop to the client component
+  return <NewsfeedPage session={session} />;
 }

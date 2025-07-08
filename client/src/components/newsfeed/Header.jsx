@@ -17,10 +17,17 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { SignOut } from '../sign-out';
+import { useRouter } from 'next/navigation';
 
-export default function Header({ selectedCity, setSelectedCity, onAddReport }) {
+export default function Header({ selectedCity, setSelectedCity, onAddReport, session }) {
   const [searchQuery, setSearchQuery] = useState('');
-
+  const router = useRouter();
+  
+    const handleLogin = () => {
+      router.push('/sign-in');
+    }
+  
   const cities = [
     'New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix', 
     'Philadelphia', 'San Antonio', 'San Diego', 'Dallas', 'San Jose'
@@ -77,6 +84,15 @@ export default function Header({ selectedCity, setSelectedCity, onAddReport }) {
               <Plus className="w-4 h-4 mr-2" />
               Report Incident
             </Button>
+
+            {session?.user ? (
+        <div className='flex gap-3 items-center'>
+          <h1>{session.user.email}</h1>
+         <SignOut />
+          </div>
+      ) : (
+        <button className='btn' onClick={handleLogin}>Login</button>
+      )}
             
             <Button variant="ghost" size="sm" className="relative">
               <Bell className="w-5 h-5" />

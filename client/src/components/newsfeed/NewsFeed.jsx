@@ -1,103 +1,80 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import axios from 'axios';
 import CrimeReportCard from './CrimeReport';
 import { Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 export default function NewsFeed({ selectedCity, filterType }) {
   const [reports, setReports] = useState([]);
+  const [pagination, setPagination] = useState(null);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
-
-  // Mock data for demonstration
-  const mockReports = [
-    {
-      id: '1',
-      title: 'Break-in reported on 5th Avenue',
-      description: 'Witnessed suspicious activity around 2 AM. Someone broke into the jewelry store on 5th Avenue. Police arrived 15 minutes later.',
-      location: '5th Avenue, Manhattan',
-      timestamp: '2024-01-15T02:30:00Z',
-      category: 'Theft',
-      threatLevel: 'high',
-      authenticityScore: 92,
-      reportedBy: 'John D.',
-      likes: 24,
-      comments: 8,
-      helps: 3,
-      verified: true,
-      images: ['https://images.pexels.com/photos/257881/pexels-photo-257881.jpeg?auto=compress&cs=tinysrgb&w=400']
-    },
-    {
-      id: '2',
-      title: 'Assault incident near Central Park',
-      description: 'A person was attacked while jogging in Central Park around 6 PM. The victim was taken to the hospital and is in stable condition.',
-      location: 'Central Park, NYC',
-      timestamp: '2024-01-15T18:00:00Z',
-      category: 'Violence',
-      threatLevel: 'critical',
-      authenticityScore: 88,
-      reportedBy: 'Sarah M.',
-      likes: 45,
-      comments: 12,
-      helps: 7,
-      verified: true
-    },
-    {
-      id: '3',
-      title: 'Vandalism in Brooklyn neighborhood',
-      description: 'Multiple cars were vandalized overnight. Graffiti and broken windows reported on several vehicles in the area.',
-      location: 'Brooklyn Heights, Brooklyn',
-      timestamp: '2024-01-15T08:00:00Z',
-      category: 'Vandalism',
-      threatLevel: 'medium',
-      authenticityScore: 76,
-      reportedBy: 'Mike R.',
-      likes: 18,
-      comments: 5,
-      helps: 2,
-      verified: false
-    },
-    {
-      id: '4',
-      title: 'Suspicious vehicle reported',
-      description: 'A van with no license plates has been parked in the same spot for 3 days. Residents are concerned about potential illegal activity.',
-      location: 'Queens Boulevard, Queens',
-      timestamp: '2024-01-15T14:30:00Z',
-      category: 'Suspicious Activity',
-      threatLevel: 'low',
-      authenticityScore: 64,
-      reportedBy: 'Lisa K.',
-      likes: 12,
-      comments: 3,
-      helps: 1,
-      verified: false
-    }
-  ];
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Simulate API call
-    setLoading(true);
-    setTimeout(() => {
-      let filteredReports = mockReports;
-      
-      if (filterType !== 'all') {
-        filteredReports = mockReports.filter(report => 
-          report.category.toLowerCase() === filterType.toLowerCase()
-        );
-      }
-      
-      setReports(filteredReports);
-      setLoading(false);
-    }, 1000);
+    setReports([]);
+    setPage(1);
+    setPagination(null);
   }, [selectedCity, filterType]);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-        <span className="ml-2 text-gray-600">Loading crime reports...</span>
-      </div>
-    );
-  }
+  useEffect(() => {
+    const fetchReports = async () => {
+      setLoading(true);
+      setError(null);
+      
+      try {
+        const params = {
+          city: selectedCity,
+          page: page,
+          limit: 5
+        };
+
+        if (filterType && filterType.toLowerCase() !== 'all') {
+          params.category = filterType;
+        }
+
+        const response = await axios.get('http://localhost:5000/posts', { params });
+        
+        const { reports: fetchedReports, pagination: paginationData } = response.data;
+        
+        // Map the database fields to the props your CrimeReportCard component expects
+        const formattedReports = fetchedReports.map(report => ({
+          id: report._id,
+          title: report.title,
+          description: report.description,
+          location: report.location,
+          timestamp: report.createdAt,
+          category: report.category,
+          threatLevel: report.threatLevel,
+          authenticityScore: report.authenticityLevel || 0,
+          reportedBy: report.userEmail,
+          comments: report.comments?.length || 0,
+          verified: report.status === 'verified',
+          images: report.attachments || [],
+          reactions: report.reactions || [], // ✅ **THE FIX IS HERE**
+        }));
+
+        setReports(prev => page === 1 ? formattedReports : [...prev, ...formattedReports]);
+        setPagination(paginationData);
+
+      } catch (err) {
+        console.error("Failed to fetch crime reports:", err);
+        setError("Could not load reports. Please try again later.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchReports();
+  }, [page, selectedCity, filterType]);
+
+  const handleLoadMore = () => {
+    if (pagination && pagination.hasNext) {
+      setPage(prevPage => prevPage + 1);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -105,12 +82,21 @@ export default function NewsFeed({ selectedCity, filterType }) {
         <h2 className="text-2xl font-bold text-gray-900">
           Crime Reports - {selectedCity}
         </h2>
-        <p className="text-sm text-gray-500">
-          {reports.length} reports found
-        </p>
+        {pagination && (
+          <p className="text-sm text-gray-500">
+            {pagination.totalReports} reports found
+          </p>
+        )}
       </div>
 
-      {reports.length === 0 ? (
+      {error && <div className="text-center py-12 text-red-600">{error}</div>}
+
+      {loading && page === 1 ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+          <span className="ml-2 text-gray-600">Loading crime reports...</span>
+        </div>
+      ) : reports.length === 0 && !loading ? (
         <div className="text-center py-12">
           <p className="text-gray-500">No crime reports found for the selected filters.</p>
         </div>
@@ -121,6 +107,19 @@ export default function NewsFeed({ selectedCity, filterType }) {
           ))}
         </div>
       )}
+
+      <div className="text-center">
+        {loading && page > 1 && (
+            <div className="flex items-center justify-center py-4">
+                <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+            </div>
+        )}
+        {!loading && pagination && pagination.hasNext && (
+          <Button onClick={handleLoadMore} variant="outline">
+            Load More
+          </Button>
+        )}
+      </div>
     </div>
   );
 }

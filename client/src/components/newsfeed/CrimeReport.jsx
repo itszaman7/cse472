@@ -1,16 +1,17 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import axios from 'axios';
+import { useUser } from '@/context/UserContext'; // Make sure you have user context
 import { 
   Heart, 
   MessageCircle, 
-  HandHeart, 
+  ThumbsUp, // Using ThumbsUp for "Helpful"
   MapPin, 
   Clock, 
   AlertTriangle,
   Shield,
-  CheckCircle,
-  XCircle
+  CheckCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -18,8 +19,67 @@ import { Badge } from '@/components/ui/badge';
 import CommentSection from './CommentSection';
 
 export default function CrimeReportCard({ report }) {
-  const [liked, setLiked] = useState(false);
-  const [helped, setHelped] = useState(false);
+  const { user } = useUser(); // Get the logged-in user
+
+  // State to manage all reactions for this card
+  const [reactions, setReactions] = useState(report.reactions || []);
+
+  // Derived state to easily check the current user's reaction and counts
+  const currentUserReaction = reactions.find(r => r.userName === user?.email)?.reactionType;
+  const likeCount = reactions.filter(r => r.reactionType === '❤️').length;
+  const helpfulCount = reactions.filter(r => r.reactionType === '👍').length;
+
+  // This function handles all reaction clicks
+  const handleReaction = async (reactionType) => {
+    if (!user) {
+      alert("Please log in to react.");
+      return;
+    }
+
+    const reportId = report.id;
+    const userName = user.email;
+    let newReactions = [...reactions];
+
+    if (currentUserReaction === reactionType) {
+      // --- User is un-reacting ---
+      // Optimistically update UI
+      newReactions = reactions.filter(r => r.userName !== userName);
+      setReactions(newReactions);
+      
+      try {
+        // Send request to backend to remove the reaction
+        await axios.delete(`http://localhost:5000/posts/${reportId}/reactions`, {
+          data: { userName }
+        });
+      } catch (err) {
+        console.error("Failed to remove reaction", err);
+        setReactions(reactions); // Revert UI on failure
+        alert("Failed to remove reaction.");
+      }
+
+    } else {
+      // --- User is adding a new reaction or changing their reaction ---
+      // Optimistically update UI
+      const otherReactions = reactions.filter(r => r.userName !== userName);
+      const newReaction = { userName, reactionType, createdAt: new Date() };
+      newReactions = [...otherReactions, newReaction];
+      setReactions(newReactions);
+
+      try {
+        // Send request to backend to add/update the reaction
+        await axios.post(`http://localhost:5000/posts/${reportId}/reactions`, {
+          userName,
+          reactionType
+        });
+      } catch (err) {
+        console.error("Failed to add reaction", err);
+        setReactions(reactions); // Revert UI on failure
+        alert("Failed to add reaction.");
+      }
+    }
+  };
+
+
   const [showComments, setShowComments] = useState(false);
 
   const getThreatLevelColor = (level) => {
@@ -52,7 +112,8 @@ export default function CrimeReportCard({ report }) {
   return (
     <Card className="w-full hover:shadow-lg transition-shadow duration-200">
       <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
+          {/* ... Header remains the same ... */}
+          <div className="flex items-start justify-between">
           <div className="flex-1">
             <div className="flex items-center space-x-2 mb-2">
               <Badge variant="outline" className={getThreatLevelColor(report.threatLevel)}>
@@ -103,10 +164,10 @@ export default function CrimeReportCard({ report }) {
           {report.description}
         </p>
 
-        {report.images && report.images.length > 0 && (
+        {report.images && report.images.length > 0 && report.images[0].data && (
           <div className="mb-4">
             <img 
-              src={report.images[0]} 
+              src={report.images[0].data} 
               alt="Crime scene" 
               className="w-full h-64 object-cover rounded-lg"
             />
@@ -115,16 +176,29 @@ export default function CrimeReportCard({ report }) {
 
         <div className="flex items-center justify-between pt-4 border-t border-gray-100">
           <div className="flex items-center space-x-1">
+            {/* --- LIKE BUTTON (HEART) --- */}
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setLiked(!liked)}
-              className={`${liked ? 'text-red-600' : 'text-gray-500'} hover:text-red-600`}
+              onClick={() => handleReaction('❤️')}
+              className={`${currentUserReaction === '❤️' ? 'text-red-600' : 'text-gray-500'} hover:text-red-600`}
             >
-              <Heart className={`w-4 h-4 mr-1 ${liked ? 'fill-current' : ''}`} />
-              {report.likes + (liked ? 1 : 0)}
+              <Heart className={`w-4 h-4 mr-1 ${currentUserReaction === '❤️' ? 'fill-current' : ''}`} />
+              {likeCount}
             </Button>
             
+            {/* --- HELPFUL BUTTON (THUMBS UP) --- */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleReaction('👍')}
+              className={`${currentUserReaction === '👍' ? 'text-blue-600' : 'text-gray-500'} hover:text-blue-600`}
+            >
+              <ThumbsUp className={`w-4 h-4 mr-1 ${currentUserReaction === '👍' ? 'fill-current' : ''}`} />
+              {helpfulCount}
+            </Button>
+            
+            {/* --- COMMENT BUTTON --- */}
             <Button
               variant="ghost"
               size="sm"
@@ -133,16 +207,6 @@ export default function CrimeReportCard({ report }) {
             >
               <MessageCircle className="w-4 h-4 mr-1" />
               {report.comments}
-            </Button>
-            
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setHelped(!helped)}
-              className={`${helped ? 'text-green-600' : 'text-gray-500'} hover:text-green-600`}
-            >
-              <HandHeart className={`w-4 h-4 mr-1 ${helped ? 'fill-current' : ''}`} />
-              {report.helps + (helped ? 1 : 0)}
             </Button>
           </div>
 

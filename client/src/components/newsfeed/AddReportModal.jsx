@@ -154,7 +154,12 @@ export default function AddReportModal({ isOpen, onClose, selectedCity }) {
         userEmail: user ? user.email : 'anonymous',
         city: selectedCity,
         status: 'pending',
-        attachments: attachments
+        attachments: attachments,
+        // Initialize interaction fields as empty
+        comments: [],
+        reactions: [],
+        authenticityLevel: 0,
+        authenticityVotes: []
       };
 
       const response = await axios.post('http://localhost:5000/posts', reportData);

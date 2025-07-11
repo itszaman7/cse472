@@ -1,48 +1,68 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import axios from 'axios';
+import { useUser } from '@/context/UserContext'; // Assuming you have a user context
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Send, Reply } from 'lucide-react';
+import { Send, Reply, Loader2 } from 'lucide-react';
 
 export default function CommentSection({ reportId }) {
-  const [comments, setComments] = useState([
-    {
-      id: '1',
-      author: 'Alex Johnson',
-      content: 'I live nearby and can confirm this happened. Police were there for hours.',
-      timestamp: '2024-01-15T10:30:00Z',
-      replies: [
-        {
-          id: '2',
-          author: 'Maria Garcia',
-          content: 'Thanks for the confirmation. Did you see which direction they went?',
-          timestamp: '2024-01-15T11:00:00Z'
-        }
-      ]
-    },
-    {
-      id: '3',
-      author: 'David Chen',
-      content: 'This is concerning. We need more patrol in this area.',
-      timestamp: '2024-01-15T12:15:00Z'
-    }
-  ]);
-  
+  const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState(null);
+  
+  // Get the current user from your context to know who is commenting
+  const { user } = useUser(); 
 
-  const handleSubmitComment = () => {
-    if (newComment.trim()) {
-      const comment = {
-        id: Date.now().toString(),
-        author: 'Current User',
-        content: newComment,
-        timestamp: new Date().toISOString()
-      };
+  // 1. Fetch comments when the component loads
+  useEffect(() => {
+    const fetchComments = async () => {
+      if (!reportId) return;
       
-      setComments([...comments, comment]);
-      setNewComment('');
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await axios.get(`http://localhost:5000/posts/${reportId}`);
+        // The comments are nested in the report object
+        setComments(response.data.comments.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
+      } catch (err) {
+        console.error("Failed to fetch comments:", err);
+        setError("Could not load comments.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchComments();
+  }, [reportId]);
+
+
+  // 2. Handle submitting a new comment
+  const handleSubmitComment = async () => {
+    if (!newComment.trim() || !user) return;
+
+    setSubmitting(true);
+    try {
+      const response = await axios.post(`http://localhost:5000/posts/${reportId}/comments`, {
+        // Your backend expects userName and comment
+        userName: user.displayName || user.email, // Use display name or fallback to email
+        comment: newComment,
+      });
+
+      // 3. Optimistic UI update: Add the new comment to the top of the list
+      // The backend conveniently returns the new comment object
+      setComments(prevComments => [response.data.comment, ...prevComments]);
+      setNewComment(''); // Clear the input field
+
+    } catch (err) {
+      console.error("Failed to post comment:", err);
+      alert("Failed to post comment. Please try again.");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -59,87 +79,71 @@ export default function CommentSection({ reportId }) {
 
   return (
     <div className="space-y-4">
-      <h4 className="font-semibold text-gray-900">Comments</h4>
+      <h4 className="font-semibold text-gray-900">Comments ({comments.length})</h4>
       
       {/* Comment Input */}
       <div className="space-y-2">
         <Textarea
-          placeholder="Add a comment..."
+          placeholder="Add a public comment..."
           value={newComment}
           onChange={(e) => setNewComment(e.target.value)}
           className="min-h-[80px] resize-none"
+          disabled={!user} // Disable if no user is logged in
         />
         <div className="flex justify-end">
           <Button 
             onClick={handleSubmitComment}
-            disabled={!newComment.trim()}
+            disabled={!newComment.trim() || submitting || !user}
             size="sm"
           >
-            <Send className="w-4 h-4 mr-2" />
+            {submitting ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <Send className="w-4 h-4 mr-2" />
+            )}
             Post Comment
           </Button>
         </div>
       </div>
 
       {/* Comments List */}
-      <div className="space-y-4">
-        {comments.map((comment) => (
-          <div key={comment.id} className="space-y-2">
-            <div className="flex items-start space-x-3">
-              <Avatar className="w-8 h-8">
-                <AvatarFallback className="text-xs">
-                  {comment.author.split(' ').map(n => n[0]).join('')}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1">
-                <div className="flex items-center space-x-2">
-                  <span className="font-medium text-sm text-gray-900">
-                    {comment.author}
-                  </span>
-                  <span className="text-xs text-gray-500">
-                    {formatTimestamp(comment.timestamp)}
-                  </span>
+      {loading ? (
+        <div className="text-center py-4">Loading comments...</div>
+      ) : error ? (
+        <div className="text-center py-4 text-red-500">{error}</div>
+      ) : (
+        <div className="space-y-4">
+          {comments.map((comment) => (
+            <div key={comment.id} className="space-y-2">
+              <div className="flex items-start space-x-3">
+                <Avatar className="w-8 h-8">
+                  <AvatarFallback className="text-xs">
+                    {comment.userName?.split(' ').map(n => n[0]).join('') || 'A'}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1">
+                  <div className="flex items-center space-x-2">
+                    <span className="font-medium text-sm text-gray-900">
+                      {comment.userName}
+                    </span>
+                    <span className="text-xs text-gray-500">
+                      {formatTimestamp(comment.createdAt)}
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-700 mt-1">
+                    {comment.comment}
+                  </p>
+                  {/* Reply functionality can be implemented later */}
+                  {/* <Button variant="ghost" size="sm" className="text-xs mt-1 h-6 px-2">
+                    <Reply className="w-3 h-3 mr-1" />
+                    Reply
+                  </Button> */}
                 </div>
-                <p className="text-sm text-gray-700 mt-1">
-                  {comment.content}
-                </p>
-                <Button variant="ghost" size="sm" className="text-xs mt-1 h-6 px-2">
-                  <Reply className="w-3 h-3 mr-1" />
-                  Reply
-                </Button>
               </div>
             </div>
-            
-            {/* Replies */}
-            {comment.replies && comment.replies.length > 0 && (
-              <div className="ml-11 space-y-2">
-                {comment.replies.map((reply) => (
-                  <div key={reply.id} className="flex items-start space-x-3">
-                    <Avatar className="w-6 h-6">
-                      <AvatarFallback className="text-xs">
-                        {reply.author.split(' ').map(n => n[0]).join('')}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2">
-                        <span className="font-medium text-sm text-gray-900">
-                          {reply.author}
-                        </span>
-                        <span className="text-xs text-gray-500">
-                          {formatTimestamp(reply.timestamp)}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-700 mt-1">
-                        {reply.content}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

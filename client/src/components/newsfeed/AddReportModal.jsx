@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from 'react';
+import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,8 +19,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { MapPin, Camera, AlertTriangle } from 'lucide-react';
+import { MapPin, Camera, AlertTriangle, X, Upload } from 'lucide-react';
 import { useUser } from '@/context/UserContext';
+import Swal from 'sweetalert2';
 
 export default function AddReportModal({ isOpen, onClose, selectedCity }) {
   const [formData, setFormData] = useState({
@@ -29,8 +31,11 @@ export default function AddReportModal({ isOpen, onClose, selectedCity }) {
     category: '',
     threatLevel: ''
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [previewUrls, setPreviewUrls] = useState([]);
 
-  const {user,status} = useUser();
+  const { user, status } = useUser();
 
   const categories = [
     'Theft',
@@ -49,11 +54,146 @@ export default function AddReportModal({ isOpen, onClose, selectedCity }) {
     { value: 'critical', label: 'Critical' }
   ];
 
-  const handleSubmit = (e) => {
+  // Handle file selection
+  const handleFileSelect = (e) => {
+    const files = Array.from(e.target.files);
+    const maxFiles = 5;
+    const maxSize = 5 * 1024 * 1024; // 5MB per file
+    
+    if (selectedFiles.length + files.length > maxFiles) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Too Many Files',
+        text: `You can only upload up to ${maxFiles} files.`,
+        confirmButtonColor: '#dc2626'
+      });
+      return;
+    }
+
+    // Validate file types and sizes
+    const validFiles = [];
+    const invalidFiles = [];
+
+    files.forEach(file => {
+      const isValidType = file.type.startsWith('image/') || file.type.startsWith('video/');
+      const isValidSize = file.size <= maxSize;
+
+      if (isValidType && isValidSize) {
+        validFiles.push(file);
+      } else {
+        invalidFiles.push(file.name);
+      }
+    });
+
+    if (invalidFiles.length > 0) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Invalid Files',
+        text: `The following files are invalid: ${invalidFiles.join(', ')}. Please ensure files are images/videos and under 5MB.`,
+        confirmButtonColor: '#dc2626'
+      });
+    }
+
+    if (validFiles.length > 0) {
+      setSelectedFiles(prev => [...prev, ...validFiles]);
+      
+      // Create preview URLs
+      const newPreviewUrls = validFiles.map(file => ({
+        file: file,
+        url: URL.createObjectURL(file),
+        type: file.type.startsWith('image/') ? 'image' : 'video'
+      }));
+      
+      setPreviewUrls(prev => [...prev, ...newPreviewUrls]);
+    }
+  };
+
+  // Remove file from selection
+  const removeFile = (index) => {
+    // Revoke the object URL to free memory
+    URL.revokeObjectURL(previewUrls[index].url);
+    
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+    setPreviewUrls(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // Convert files to base64 for storage
+  const convertFilesToBase64 = async (files) => {
+    const promises = files.map(file => {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          resolve({
+            name: file.name,
+            type: file.type,
+            size: file.size,
+            data: reader.result
+          });
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    });
+    
+    return Promise.all(promises);
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle form submission
-    console.log('Submitting report:', formData);
-    onClose();
+    setIsSubmitting(true);
+
+    try {
+      // Convert files to base64 if any are selected
+      let attachments = [];
+      if (selectedFiles.length > 0) {
+        attachments = await convertFilesToBase64(selectedFiles);
+      }
+
+      const reportData = {
+        ...formData,
+        userEmail: user ? user.email : 'anonymous',
+        city: selectedCity,
+        status: 'pending',
+        attachments: attachments
+      };
+
+      const response = await axios.post('http://localhost:5000/posts', reportData);
+      
+      // Success alert
+      await Swal.fire({
+        icon: 'success',
+        title: 'Report Submitted Successfully!',
+        text: 'Your incident report has been submitted and is now under review.',
+        confirmButtonColor: '#10b981',
+        timer: 3000,
+        showConfirmButton: true
+      });
+
+      // Reset form and close modal
+      setFormData({
+        title: '',
+        description: '',
+        location: '',
+        category: '',
+        threatLevel: ''
+      });
+      setSelectedFiles([]);
+      setPreviewUrls([]);
+      onClose();
+
+    } catch (error) {
+      console.error('Error submitting report:', error);
+      
+      // Error alert
+      await Swal.fire({
+        icon: 'error',
+        title: 'Submission Failed',
+        text: error.response?.data?.message || 'An error occurred while submitting your report. Please try again.',
+        confirmButtonColor: '#dc2626'
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleInputChange = (field, value) => {
@@ -63,9 +203,16 @@ export default function AddReportModal({ isOpen, onClose, selectedCity }) {
     }));
   };
 
+  // Clean up preview URLs when component unmounts
+  useState(() => {
+    return () => {
+      previewUrls.forEach(preview => URL.revokeObjectURL(preview.url));
+    };
+  }, []);
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center">
             <AlertTriangle className="w-5 h-5 mr-2 text-red-600" />
@@ -73,8 +220,6 @@ export default function AddReportModal({ isOpen, onClose, selectedCity }) {
           </DialogTitle>
         </DialogHeader>
 
-       
-        
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -87,10 +232,10 @@ export default function AddReportModal({ isOpen, onClose, selectedCity }) {
                 required
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="category">Category</Label>
-              <Select value={formData.category} onValueChange={(value) => handleInputChange('category', value)}>
+              <Select required value={formData.category} onValueChange={(value) => handleInputChange('category', value)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
@@ -132,10 +277,10 @@ export default function AddReportModal({ isOpen, onClose, selectedCity }) {
                 />
               </div>
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="threatLevel">Threat Level</Label>
-              <Select value={formData.threatLevel} onValueChange={(value) => handleInputChange('threatLevel', value)}>
+              <Select required value={formData.threatLevel} onValueChange={(value) => handleInputChange('threatLevel', value)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select threat level" />
                 </SelectTrigger>
@@ -153,22 +298,69 @@ export default function AddReportModal({ isOpen, onClose, selectedCity }) {
           <div className="space-y-2">
             <Label>Attachments</Label>
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-              <Camera className="w-8 h-8 mx-auto text-gray-400 mb-2" />
-              <p className="text-sm text-gray-600">
+              <Upload className="w-8 h-8 mx-auto text-gray-400 mb-2" />
+              <p className="text-sm text-gray-600 mb-2">
                 Upload photos or videos (optional)
               </p>
-              <Button type="button" variant="outline" className="mt-2">
+              <p className="text-xs text-gray-500 mb-4">
+                Max 5 files, 5MB each. Supported: JPG, PNG, GIF, MP4, MOV
+              </p>
+              <input
+                type="file"
+                multiple
+                accept="image/*,video/*"
+                onChange={handleFileSelect}
+                className="hidden"
+                id="file-upload"
+              />
+              <Button type="button" variant="outline" onClick={() => document.getElementById('file-upload').click()}>
+                <Camera className="w-4 h-4 mr-2" />
                 Choose Files
               </Button>
             </div>
+
+            {/* File previews */}
+            {previewUrls.length > 0 && (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+                {previewUrls.map((preview, index) => (
+                  <div key={index} className="relative group">
+                    <div className="aspect-square rounded-lg overflow-hidden bg-gray-100">
+                      {preview.type === 'image' ? (
+                        <img
+                          src={preview.url}
+                          alt={`Preview ${index + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <video
+                          src={preview.url}
+                          className="w-full h-full object-cover"
+                          controls
+                        />
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeFile(index)}
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                    <p className="text-xs text-gray-600 mt-1 truncate">
+                      {selectedFiles[index]?.name}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="flex justify-end space-x-3">
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
               Cancel
             </Button>
-            <Button type="submit" className="bg-red-600 hover:bg-red-700">
-              Submit Report
+            <Button type="submit" className="bg-red-600 hover:bg-red-700" disabled={isSubmitting}>
+              {isSubmitting ? 'Submitting...' : 'Submit Report'}
             </Button>
           </div>
         </form>

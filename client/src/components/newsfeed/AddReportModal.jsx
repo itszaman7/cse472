@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { MapPin, Camera, AlertTriangle } from 'lucide-react';
+import { useUser } from '@/context/UserContext';
 
 export default function AddReportModal({ isOpen, onClose, selectedCity }) {
   const [formData, setFormData] = useState({
@@ -28,6 +29,8 @@ export default function AddReportModal({ isOpen, onClose, selectedCity }) {
     category: '',
     threatLevel: ''
   });
+
+  const {user,status} = useUser();
 
   const categories = [
     'Theft',
@@ -69,6 +72,8 @@ export default function AddReportModal({ isOpen, onClose, selectedCity }) {
             Report New Incident
           </DialogTitle>
         </DialogHeader>
+
+       
         
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

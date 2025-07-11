@@ -6,7 +6,8 @@ import { useUser } from '@/context/UserContext'; // Make sure you have user cont
 import { 
   Heart, 
   MessageCircle, 
-  ThumbsUp, // Using ThumbsUp for "Helpful"
+  ThumbsUp,
+  ThumbsDown , // Using ThumbsUp for "Helpful"
   MapPin, 
   Clock, 
   AlertTriangle,
@@ -183,7 +184,7 @@ export default function CrimeReportCard({ report }) {
               onClick={() => handleReaction('❤️')}
               className={`${currentUserReaction === '❤️' ? 'text-red-600' : 'text-gray-500'} hover:text-red-600`}
             >
-              <Heart className={`w-4 h-4 mr-1 ${currentUserReaction === '❤️' ? 'fill-current' : ''}`} />
+              <ThumbsUp className={`w-4 h-4 mr-1 ${currentUserReaction === '❤️' ? 'fill-current' : ''}`} />
               {likeCount}
             </Button>
             
@@ -194,7 +195,7 @@ export default function CrimeReportCard({ report }) {
               onClick={() => handleReaction('👍')}
               className={`${currentUserReaction === '👍' ? 'text-blue-600' : 'text-gray-500'} hover:text-blue-600`}
             >
-              <ThumbsUp className={`w-4 h-4 mr-1 ${currentUserReaction === '👍' ? 'fill-current' : ''}`} />
+              <ThumbsDown className={`w-4 h-4 mr-1 ${currentUserReaction === '👍' ? 'fill-current' : ''}`} />
               {helpfulCount}
             </Button>
             

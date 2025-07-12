@@ -12,7 +12,8 @@ import {
   Clock, 
   AlertTriangle,
   Shield,
-  CheckCircle
+  CheckCircle,
+  Smile, Frown, Meh
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -109,7 +110,43 @@ export default function CrimeReportCard({ report }) {
     if (hours < 24) return `${hours}h ago`;
     return date.toLocaleDateString();
   };
+  const SentimentBadge = ({ sentiment }) => {
+  if (!sentiment || sentiment === 'neutral') {
+    return (
+      <Badge variant="outline" className="bg-gray-100 text-gray-800 border-gray-200">
+        <Meh className="w-3 h-3 mr-1" />
+        Neutral Reactions
+      </Badge>
+    );
+  }
+  if (sentiment === 'positive') {
+    return (
+      <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">
+        <Smile className="w-3 h-3 mr-1" />
+        Positive Engagement
+      </Badge>
+    );
+  }
+  if (sentiment === 'negative') {
+    return (
+      <Badge variant="outline" className="bg-red-100 text-red-800 border-red-200">
+        <Frown className="w-3 h-3 mr-1" />
+        Mostly Negative
+      </Badge>
+    );
+  }
+  if (sentiment === 'mixed') {
+    return (
+      <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-200">
+        <Meh className="w-3 h-3 mr-1" />
+        Mixed Reactions
+      </Badge>
+    );
+  }
+  return null;
+};
 
+  
   return (
     <Card className="w-full hover:shadow-lg transition-shadow duration-200">
       <CardHeader className="pb-3">
@@ -121,6 +158,7 @@ export default function CrimeReportCard({ report }) {
                 <AlertTriangle className="w-3 h-3 mr-1" />
                 {report.threatLevel.toUpperCase()}
               </Badge>
+                <SentimentBadge sentiment={report.sentiment?.overall} />
               <Badge variant="outline">
                 {report.category}
               </Badge>
@@ -129,6 +167,7 @@ export default function CrimeReportCard({ report }) {
                   <CheckCircle className="w-3 h-3 mr-1" />
                   Verified
                 </Badge>
+               
               )}
             </div>
             <h3 className="text-lg font-semibold text-gray-900 mb-1">

@@ -53,7 +53,8 @@ export default function NewsFeed({ selectedCity, filterType }) {
           comments: report.comments?.length || 0,
           verified: report.status === 'verified',
           images: report.attachments || [],
-          reactions: report.reactions || [], // ✅ **THE FIX IS HERE**
+          reactions: report.reactions || [],
+          sentiment: report.sentiment || { overall: 'neutral' }
         }));
 
         setReports(prev => page === 1 ? formattedReports : [...prev, ...formattedReports]);

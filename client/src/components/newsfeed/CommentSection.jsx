@@ -43,28 +43,43 @@ export default function CommentSection({ reportId }) {
 
   // 2. Handle submitting a new comment
   const handleSubmitComment = async () => {
-    if (!newComment.trim() || !user) return;
 
-    setSubmitting(true);
-    try {
-      const response = await axios.post(`http://localhost:5000/posts/${reportId}/comments`, {
-        // Your backend expects userName and comment
-        userName: user.displayName || user.email, // Use display name or fallback to email
-        comment: newComment,
-      });
+if (!newComment.trim() || !user) return;
 
-      // 3. Optimistic UI update: Add the new comment to the top of the list
-      // The backend conveniently returns the new comment object
-      setComments(prevComments => [response.data.comment, ...prevComments]);
-      setNewComment(''); // Clear the input field
+ setSubmitting(true);
 
-    } catch (err) {
-      console.error("Failed to post comment:", err);
-      alert("Failed to post comment. Please try again.");
-    } finally {
-      setSubmitting(false);
-    }
-  };
+ try {
+const response = await axios.post(`http://localhost:5000/posts/${reportId}/comments`, {
+
+ // Your backend expects userName and comment
+
+ userName: user.displayName || user.email, // Use display name or fallback to email
+
+ comment: newComment,
+
+});
+// 3. Optimistic UI update: Add the new comment to the top of the list
+
+ // The backend conveniently returns the new comment object
+
+setComments(prevComments => [response.data.comment, ...prevComments]);
+ setNewComment(''); // Clear the input field
+
+
+
+ } catch (err) {
+
+console.error("Failed to post comment:", err);
+
+alert("Failed to post comment. Please try again.");
+
+ } finally {
+
+setSubmitting(false);
+
+ }
+
+ };
 
   const formatTimestamp = (timestamp) => {
     const date = new Date(timestamp);

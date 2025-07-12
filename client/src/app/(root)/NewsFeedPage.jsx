@@ -10,7 +10,7 @@ import { useRouter } from 'next/navigation';
 
 // Accept the 'session' object as a prop
 export default function NewsfeedPage({ session }) {
-  const [selectedCity, setSelectedCity] = useState('New York');
+  const [selectedCity, setSelectedCity] = useState('Dhaka');
   const [isAddReportOpen, setIsAddReportOpen] = useState(false);
   const [filterType, setFilterType] = useState('all');
   

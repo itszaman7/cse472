@@ -29,7 +29,7 @@ export default function Header({ selectedCity, setSelectedCity, onAddReport, ses
     }
   
   const cities = [
-     'New York', 'Dhaka', 'Chittagong',
+     'Dhaka', 'Chittagong',
   ];
 
   return (

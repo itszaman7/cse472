@@ -39,7 +39,6 @@ export default function NewsFeed({ selectedCity, filterType }) {
         
         const { reports: fetchedReports, pagination: paginationData } = response.data;
         
-        // Map the database fields to the props your CrimeReportCard component expects
         const formattedReports = fetchedReports.map(report => ({
           id: report._id,
           title: report.title,
@@ -52,7 +51,7 @@ export default function NewsFeed({ selectedCity, filterType }) {
           reportedBy: report.userEmail,
           comments: report.comments?.length || 0,
           verified: report.status === 'verified',
-          images: report.attachments || [],
+          attachments: report.attachments || [], // ✅ THIS LINE IS NOW FIXED
           reactions: report.reactions || [],
           sentiment: report.sentiment || { overall: 'neutral' }
         }));

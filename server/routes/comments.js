@@ -61,67 +61,6 @@ router.post('/:id/comments', async (req, res) => {
     }
 });
 
-// --- NEW HELPER FUNCTION TO RUN ANALYSIS IN THE BACKGROUND ---
-// async function analyzeAndUpdateSentiment(reportId, commentText) {
-//     try {
-//         // A. Call Hugging Face Inference API
-//         const HUGGING_FACE_URL = "https://api-inference.huggingface.co/models/finiteautomata/bertweet-base-sentiment-analysis";
-//         const response = await axios.post(
-//             HUGGING_FACE_URL,
-//             { inputs: commentText },
-//             { headers: { Authorization: `Bearer ${process.env.HF_API_TOKEN}` } }
-//         );
-        
-//         // The API returns an array of label predictions; we take the one with the highest score.
-//         const sentiments = response.data[0];
-//         let highestScore = 0;
-//         let sentimentLabel = 'NEU'; // Default to Neutral
-
-//         sentiments.forEach(s => {
-//             if (s.score > highestScore) {
-//                 highestScore = s.score;
-//                 sentimentLabel = s.label; // Will be 'POS', 'NEG', or 'NEU'
-//             }
-//         });
-
-//         // B. Determine which counter to increment
-//         const updateField = sentimentLabel === 'POS' ? 'sentiment.positiveCount' :
-//                               sentimentLabel === 'NEG' ? 'sentiment.negativeCount' :
-//                               'sentiment.neutralCount';
-
-//         const updateResult = await reportsCollection.updateOne(
-//             { _id: new ObjectId(reportId) },
-//             { $inc: { [updateField]: 1 } }
-//         );
-
-//         // C. Update the overall sentiment label based on the new counts
-//         const updatedReport = await reportsCollection.findOne({ _id: new ObjectId(reportId) });
-//         const { positiveCount, negativeCount, neutralCount } = updatedReport.sentiment;
-
-//         let overallSentiment = 'neutral';
-//         const totalVotes = positiveCount + negativeCount;
-
-//         if (totalVotes > 0) {
-//             if (positiveCount > negativeCount) {
-//                 overallSentiment = 'positive';
-//             } else if (negativeCount > positiveCount) {
-//                 overallSentiment = 'negative';
-//             } else {
-//                 overallSentiment = 'mixed';
-//             }
-//         }
-        
-//         // D. Save the new overall sentiment to the database
-//         await reportsCollection.updateOne(
-//             { _id: new ObjectId(reportId) },
-//             { $set: { "sentiment.overall": overallSentiment } }
-//         );
-
-//     } catch (error) {
-//         console.error(`Sentiment analysis failed for report ${reportId}:`, error.response ? error.response.data : error.message);
-//     }
-// }
-
 
 // Delete comment (only by the comment author)
 router.delete('/:id/comments/:commentId', async (req, res) => {

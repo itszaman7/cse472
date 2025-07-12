@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import axios from 'axios';
-import { useUser } from '@/context/UserContext'; // Make sure you have user context
+import { useUser } from '@/context/UserContext';
 import { 
   Heart, 
   MessageCircle, 
   ThumbsUp,
-  ThumbsDown , // Using ThumbsUp for "Helpful"
+  ThumbsDown,
   MapPin, 
   Clock, 
   AlertTriangle,
@@ -20,69 +20,84 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import CommentSection from './CommentSection';
 
+const SentimentBadge = ({ sentiment }) => {
+  if (!sentiment || sentiment === 'neutral') {
+    return (
+      <Badge variant="outline" className="bg-gray-100 text-gray-800 border-gray-200">
+        <Meh className="w-3 h-3 mr-1" />
+        Neutral Reactions
+      </Badge>
+    );
+  }
+  if (sentiment === 'positive') {
+    return (
+      <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">
+        <Smile className="w-3 h-3 mr-1" />
+        Positive Comment Section
+      </Badge>
+    );
+  }
+  if (sentiment === 'negative') {
+    return (
+      <Badge variant="outline" className="bg-red-100 text-red-800 border-red-200">
+        <Frown className="w-3 h-3 mr-1" />
+        Mostly Negative Comments
+      </Badge>
+    );
+  }
+  if (sentiment === 'mixed') {
+    return (
+      <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-200">
+        <Meh className="w-3 h-3 mr-1" />
+        Mixed Reactions
+      </Badge>
+    );
+  }
+  return null;
+};
+
 export default function CrimeReportCard({ report }) {
-  const { user } = useUser(); // Get the logged-in user
-
-  // State to manage all reactions for this card
+  const { user } = useUser();
   const [reactions, setReactions] = useState(report.reactions || []);
+  const [showComments, setShowComments] = useState(false);
 
-  // Derived state to easily check the current user's reaction and counts
   const currentUserReaction = reactions.find(r => r.userName === user?.email)?.reactionType;
   const likeCount = reactions.filter(r => r.reactionType === '❤️').length;
   const helpfulCount = reactions.filter(r => r.reactionType === '👍').length;
 
-  // This function handles all reaction clicks
   const handleReaction = async (reactionType) => {
     if (!user) {
       alert("Please log in to react.");
       return;
     }
-
     const reportId = report.id;
     const userName = user.email;
     let newReactions = [...reactions];
 
     if (currentUserReaction === reactionType) {
-      // --- User is un-reacting ---
-      // Optimistically update UI
       newReactions = reactions.filter(r => r.userName !== userName);
       setReactions(newReactions);
-      
       try {
-        // Send request to backend to remove the reaction
-        await axios.delete(`http://localhost:5000/posts/${reportId}/reactions`, {
-          data: { userName }
-        });
+        await axios.delete(`http://localhost:5000/posts/${reportId}/reactions`, { data: { userName } });
       } catch (err) {
         console.error("Failed to remove reaction", err);
-        setReactions(reactions); // Revert UI on failure
+        setReactions(reactions);
         alert("Failed to remove reaction.");
       }
-
     } else {
-      // --- User is adding a new reaction or changing their reaction ---
-      // Optimistically update UI
       const otherReactions = reactions.filter(r => r.userName !== userName);
       const newReaction = { userName, reactionType, createdAt: new Date() };
       newReactions = [...otherReactions, newReaction];
       setReactions(newReactions);
-
       try {
-        // Send request to backend to add/update the reaction
-        await axios.post(`http://localhost:5000/posts/${reportId}/reactions`, {
-          userName,
-          reactionType
-        });
+        await axios.post(`http://localhost:5000/posts/${reportId}/reactions`, { userName, reactionType });
       } catch (err) {
         console.error("Failed to add reaction", err);
-        setReactions(reactions); // Revert UI on failure
+        setReactions(reactions);
         alert("Failed to add reaction.");
       }
     }
   };
-
-
-  const [showComments, setShowComments] = useState(false);
 
   const getThreatLevelColor = (level) => {
     switch (level) {
@@ -110,55 +125,18 @@ export default function CrimeReportCard({ report }) {
     if (hours < 24) return `${hours}h ago`;
     return date.toLocaleDateString();
   };
-  const SentimentBadge = ({ sentiment }) => {
-  if (!sentiment || sentiment === 'neutral') {
-    return (
-      <Badge variant="outline" className="bg-gray-100 text-gray-800 border-gray-200">
-        <Meh className="w-3 h-3 mr-1" />
-        Neutral Reactions
-      </Badge>
-    );
-  }
-  if (sentiment === 'positive') {
-    return (
-      <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">
-        <Smile className="w-3 h-3 mr-1" />
-        Positive Engagement
-      </Badge>
-    );
-  }
-  if (sentiment === 'negative') {
-    return (
-      <Badge variant="outline" className="bg-red-100 text-red-800 border-red-200">
-        <Frown className="w-3 h-3 mr-1" />
-        Mostly Negative
-      </Badge>
-    );
-  }
-  if (sentiment === 'mixed') {
-    return (
-      <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-200">
-        <Meh className="w-3 h-3 mr-1" />
-        Mixed Reactions
-      </Badge>
-    );
-  }
-  return null;
-};
-
   
   return (
     <Card className="w-full hover:shadow-lg transition-shadow duration-200">
       <CardHeader className="pb-3">
-          {/* ... Header remains the same ... */}
-          <div className="flex items-start justify-between">
+        <div className="flex items-start justify-between">
           <div className="flex-1">
-            <div className="flex items-center space-x-2 mb-2">
+            <div className="flex items-center flex-wrap gap-2 mb-2">
               <Badge variant="outline" className={getThreatLevelColor(report.threatLevel)}>
                 <AlertTriangle className="w-3 h-3 mr-1" />
                 {report.threatLevel.toUpperCase()}
               </Badge>
-                <SentimentBadge sentiment={report.sentiment?.overall} />
+              <SentimentBadge sentiment={report.sentiment?.overall} />
               <Badge variant="outline">
                 {report.category}
               </Badge>
@@ -167,7 +145,6 @@ export default function CrimeReportCard({ report }) {
                   <CheckCircle className="w-3 h-3 mr-1" />
                   Verified
                 </Badge>
-               
               )}
             </div>
             <h3 className="text-lg font-semibold text-gray-900 mb-1">
@@ -204,45 +181,46 @@ export default function CrimeReportCard({ report }) {
           {report.description}
         </p>
 
-        {report.images && report.images.length > 0 && report.images[0].data && (
-          <div className="mb-4">
-            <img 
-              src={report.images[0].data} 
-              alt="Crime scene" 
-              className="w-full h-64 object-cover rounded-lg"
-            />
+        {/* --- THIS IS THE MODIFIED SECTION --- */}
+        {report.attachments && report.attachments.length > 0 && (
+          <div className="mb-4 rounded-lg overflow-hidden bg-gray-100">
+            {report.attachments[0].file_type === 'image' ? (
+              <img 
+                src={report.attachments[0].url} 
+                alt={report.title} 
+                className="w-full h-auto max-h-96 object-contain"
+              />
+            ) : report.attachments[0].file_type === 'video' ? (
+              <video 
+                src={report.attachments[0].url} 
+                className="w-full h-auto max-h-96"
+                controls
+              />
+            ) : null}
           </div>
         )}
+        {/* --- END OF MODIFICATION --- */}
 
         <div className="flex items-center justify-between pt-4 border-t border-gray-100">
           <div className="flex items-center space-x-1">
-            {/* --- LIKE BUTTON (HEART) --- */}
             <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleReaction('❤️')}
+              variant="ghost" size="sm" onClick={() => handleReaction('❤️')}
               className={`${currentUserReaction === '❤️' ? 'text-red-600' : 'text-gray-500'} hover:text-red-600`}
             >
               <ThumbsUp className={`w-4 h-4 mr-1 ${currentUserReaction === '❤️' ? 'fill-current' : ''}`} />
               {likeCount}
             </Button>
             
-            {/* --- HELPFUL BUTTON (THUMBS UP) --- */}
             <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleReaction('👍')}
+              variant="ghost" size="sm" onClick={() => handleReaction('👍')}
               className={`${currentUserReaction === '👍' ? 'text-blue-600' : 'text-gray-500'} hover:text-blue-600`}
             >
               <ThumbsDown className={`w-4 h-4 mr-1 ${currentUserReaction === '👍' ? 'fill-current' : ''}`} />
               {helpfulCount}
             </Button>
             
-            {/* --- COMMENT BUTTON --- */}
             <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowComments(!showComments)}
+              variant="ghost" size="sm" onClick={() => setShowComments(!showComments)}
               className="text-gray-500 hover:text-blue-600"
             >
               <MessageCircle className="w-4 h-4 mr-1" />

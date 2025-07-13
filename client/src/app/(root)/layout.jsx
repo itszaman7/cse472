@@ -4,6 +4,7 @@ import NavBar from "../../components/NavBar";
 import Footer from "../../components/Footer";
 import { SessionProvider } from "next-auth/react";
 import { UserProvider } from "@/context/UserContext";
+import { SearchProvider } from "@/context/SearchContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,6 +33,7 @@ export default function RootLayout({ children }) {
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <SessionProvider>
           <UserProvider>
+            <SearchProvider>
             <nav>
               {/* <NavBar /> */}
             </nav>
@@ -41,6 +43,7 @@ export default function RootLayout({ children }) {
             <footer>
               <Footer />
             </footer>
+            </SearchProvider>
           </UserProvider>
         </SessionProvider>
       </body>

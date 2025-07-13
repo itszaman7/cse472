@@ -19,9 +19,10 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { SignOut } from '../sign-out';
 import { useRouter } from 'next/navigation';
+import { useSearch } from '@/context/SearchContext';
 
 export default function Header({ selectedCity, setSelectedCity, onAddReport, session }) {
-  const [searchQuery, setSearchQuery] = useState('');
+   const { searchQuery, setSearchQuery } = useSearch();
   const router = useRouter();
   
     const handleLogin = () => {
@@ -31,6 +32,13 @@ export default function Header({ selectedCity, setSelectedCity, onAddReport, ses
   const cities = [
      'Dhaka', 'Chittagong',
   ];
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault(); 
+    if (!searchQuery.trim()) return;
+    
+    router.push(`/search?q=${encodeURIComponent(searchQuery)}`);
+};
 
   return (
     <header className="bg-white/80 backdrop-blur-xl shadow-lg border-b border-gray-200/50 sticky top-0 z-50 transition-all duration-300">
@@ -51,31 +59,35 @@ export default function Header({ selectedCity, setSelectedCity, onAddReport, ses
           </div>
 
           {/* Search and Location */}
-          <div className="flex items-center space-x-5 flex-1 max-w-2xl mx-10">
+          
+            <form onSubmit={handleSearchSubmit} className="flex items-center space-x-2 flex-1 max-w-2xl mx-10">
             <div className="relative flex-1 group">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 group-focus-within:text-blue-600 transition-colors duration-200" />
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <Input
-                placeholder="Search Subreddits"
+                placeholder="Search Subreddits..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 bg-white/70 backdrop-blur-sm hover:bg-white/90 text-gray-900 placeholder:text-gray-500 font-medium"
+                onChange={(e) => setSearchQuery(e.target.value)} // Updates context on every key press
+                className="pl-12 pr-4 py-3 border-2 rounded-xl"
               />
             </div>
+            {/* 👇 5. Add a submit button 👇 */}
+            <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-5 py-3">
+              Search
+            </Button>
             
             <Select value={selectedCity} onValueChange={setSelectedCity}>
-              <SelectTrigger className="w-52 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 bg-white/70 backdrop-blur-sm hover:bg-white/90 font-medium">
+              <SelectTrigger className="w-52 border-2 rounded-xl">
                 <MapPin className="w-5 h-5 mr-2 text-gray-600" />
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="border-2 border-gray-200 rounded-xl shadow-xl backdrop-blur-sm bg-white/95">
+              <SelectContent>
                 {cities.map((city) => (
-                  <SelectItem key={city} value={city} className="hover:bg-blue-50 transition-colors duration-200 font-medium">
-                    {city}
-                  </SelectItem>
+                  <SelectItem key={city} value={city}>{city}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
-          </div>
+          </form>
+           
 
           {/* Actions */}
           <div className="flex items-center space-x-4">

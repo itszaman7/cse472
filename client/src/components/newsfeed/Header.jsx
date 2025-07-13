@@ -55,7 +55,7 @@ export default function Header({ selectedCity, setSelectedCity, onAddReport, ses
             <div className="relative flex-1 group">
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 group-focus-within:text-blue-600 transition-colors duration-200" />
               <Input
-                placeholder="Search crime reports, locations..."
+                placeholder="Search Subreddits"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 bg-white/70 backdrop-blur-sm hover:bg-white/90 text-gray-900 placeholder:text-gray-500 font-medium"

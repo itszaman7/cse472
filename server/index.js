@@ -10,6 +10,7 @@ const postRoutes = require('./routes/posts');
 const commentRoutes = require('./routes/comments');
 const reactionRoutes = require('./routes/reactions');
 const authenticityRoutes = require('./routes/authenticity');
+const redditRoutes = require('./routes/reddit');
 
 dotenv.config();
 const port = process.env.PORT || 5000;
@@ -59,6 +60,7 @@ async function run() {
         app.use('/posts', commentRoutes);
         app.use('/posts', reactionRoutes);
         app.use('/posts', authenticityRoutes);
+        app.use('/api/reddit', redditRoutes); 
 
 
     } catch (error) {

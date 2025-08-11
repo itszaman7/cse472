@@ -41,7 +41,7 @@ export default function Header({ selectedCity, setSelectedCity, onAddReport, ses
 };
 
   return (
-    <header className="bg-white/80 backdrop-blur-xl shadow-lg border-b border-gray-200/50 sticky top-0 z-50 transition-all duration-300">
+    <div className="bg-white/80 backdrop-blur-xl shadow-lg border-b border-gray-200/50 sticky top-0 z-50 transition-all duration-300">
       <div className="max-w-7xl mx-auto px-6 py-5">
         <div className="flex items-center justify-between">
           {/* Logo and Brand */}
@@ -59,18 +59,16 @@ export default function Header({ selectedCity, setSelectedCity, onAddReport, ses
           </div>
 
           {/* Search and Location */}
-          
-            <form onSubmit={handleSearchSubmit} className="flex items-center space-x-2 flex-1 max-w-2xl mx-10">
+          <form onSubmit={handleSearchSubmit} className="flex items-center space-x-2 flex-1 max-w-2xl mx-10">
             <div className="relative flex-1 group">
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <Input
                 placeholder="Search Subreddits..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)} // Updates context on every key press
+                onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-12 pr-4 py-3 border-2 rounded-xl"
               />
             </div>
-            {/* 👇 5. Add a submit button 👇 */}
             <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-5 py-3">
               Search
             </Button>
@@ -87,7 +85,6 @@ export default function Header({ selectedCity, setSelectedCity, onAddReport, ses
               </SelectContent>
             </Select>
           </form>
-           
 
           {/* Actions */}
           <div className="flex items-center space-x-4">
@@ -100,50 +97,24 @@ export default function Header({ selectedCity, setSelectedCity, onAddReport, ses
             </Button>
 
             {session?.user ? (
-        <div className='flex gap-4 items-center'>
-          <span className="text-sm font-medium text-gray-700 bg-gray-100 px-3 py-2 rounded-lg">
-            {session.user.email}
-          </span>
-         <SignOut />
-          </div>
-      ) : (
-        <Button 
-          onClick={handleLogin}
-          variant="outline"
-          className="border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105"
-        >
-          Login
-        </Button>
-      )}
-            
-            <Button variant="ghost" size="sm" className="relative hover:bg-gray-100 rounded-xl p-3 transition-all duration-200 hover:scale-105">
-              <Bell className="w-6 h-6 text-gray-600" />
-              <span className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-r from-red-500 to-red-600 rounded-full text-xs text-white flex items-center justify-center font-bold shadow-lg">
-                3
-              </span>
-            </Button>
-
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="hover:bg-gray-100 rounded-xl p-3 transition-all duration-200 hover:scale-105">
-                  <User className="w-6 h-6 text-gray-600" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="border-2 border-gray-200 rounded-xl shadow-xl backdrop-blur-sm bg-white/95 p-2">
-                <DropdownMenuItem className="hover:bg-blue-50 transition-colors duration-200 font-medium rounded-lg">
-                  Profile
-                </DropdownMenuItem>
-                <DropdownMenuItem className="hover:bg-blue-50 transition-colors duration-200 font-medium rounded-lg">
-                  Settings
-                </DropdownMenuItem>
-                <DropdownMenuItem className="hover:bg-red-50 transition-colors duration-200 font-medium rounded-lg text-red-600">
-                  Sign Out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+              <div className='flex gap-4 items-center'>
+                <span className="text-sm font-medium text-gray-700 bg-gray-100 px-3 py-2 rounded-lg">
+                  {session.user.email}
+                </span>
+                <SignOut />
+              </div>
+            ) : (
+              <Button 
+                onClick={handleLogin}
+                variant="outline"
+                className="border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105"
+              >
+                Login
+              </Button>
+            )}
           </div>
         </div>
       </div>
-    </header>
+    </div>
   );
 }

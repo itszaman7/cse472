@@ -11,6 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { MapPin, Camera, AlertTriangle, X, Upload, FileImage, Video } from 'lucide-react';
 import { useUser } from '@/context/UserContext';
 import Swal from 'sweetalert2';
+import OpenStreetMapLocationSelector from './OpenStreetMapLocationSelector';
+import SimpleMapViewer from './SimpleMapViewer';
 
 export default function AddReportModal({ isOpen, onClose, selectedCity }) {
   const [formData, setFormData] = useState({
@@ -20,6 +22,7 @@ export default function AddReportModal({ isOpen, onClose, selectedCity }) {
     category: '',
     threatLevel: ''
   });
+  const [selectedLocationData, setSelectedLocationData] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [previewUrls, setPreviewUrls] = useState([]);
@@ -169,202 +172,210 @@ export default function AddReportModal({ isOpen, onClose, selectedCity }) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl max-h-[95vh] overflow-y-auto bg-gradient-to-br from-white to-gray-50 border-0 shadow-2xl">
-        <DialogHeader className="pb-6">
-          <DialogTitle className="flex items-center text-2xl font-bold bg-gradient-to-r from-red-600 to-red-800 bg-clip-text text-transparent">
+      <DialogContent className="w-[95vw] sm:max-w-2xl lg:max-w-3xl max-h-[92vh] overflow-y-auto bg-white border-0 shadow-2xl rounded-2xl p-0">
+        {/* Header */}
+        <DialogHeader className="px-6 pt-5 pb-4 sticky top-0 z-10 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/75 border-b">
+          <DialogTitle className="flex items-center text-xl sm:text-2xl font-bold bg-gradient-to-r from-red-600 to-red-800 bg-clip-text text-transparent">
             <div className="p-2 rounded-full bg-red-100 mr-3">
               <AlertTriangle className="w-6 h-6 text-red-600" />
             </div>
             Report New Incident
           </DialogTitle>
-          <p className="text-gray-600 mt-2">Help keep your community safe by reporting incidents</p>
+          <p className="text-gray-600 mt-1">Help keep your community safe by reporting incidents</p>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Body */}
+        <div className="px-6 py-5">
+          <form onSubmit={handleSubmit} className="space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-3">
+                <Label htmlFor="title" className="text-sm font-semibold text-gray-700 flex items-center">
+                  Incident Title
+                  <span className="text-red-500 ml-1">*</span>
+                </Label>
+                <Input 
+                  id="title" 
+                  placeholder="Brief description of the incident" 
+                  value={formData.title} 
+                  onChange={(e) => handleInputChange('title', e.target.value)} 
+                  required 
+                  className="border-2 border-gray-200 focus:border-red-400 focus:ring-red-100 rounded-lg transition-all duration-200 hover:border-gray-300"
+                />
+              </div>
+              <div className="space-y-3">
+                <Label htmlFor="category" className="text-sm font-semibold text-gray-700 flex items-center">
+                  Category
+                  <span className="text-red-500 ml-1">*</span>
+                </Label>
+                <Select required value={formData.category} onValueChange={(value) => handleInputChange('category', value)}>
+                  <SelectTrigger className="border-2 border-gray-200 focus:border-red-400 focus:ring-red-100 rounded-lg transition-all duration-200 hover:border-gray-300">
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-lg border-2 shadow-lg">
+                    {categories.map((category) => (
+                      <SelectItem key={category} value={category} className="rounded-md hover:bg-red-50 focus:bg-red-50">
+                        {category}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
             <div className="space-y-3">
-              <Label htmlFor="title" className="text-sm font-semibold text-gray-700 flex items-center">
-                Incident Title
+              <Label htmlFor="description" className="text-sm font-semibold text-gray-700 flex items-center">
+                Description
                 <span className="text-red-500 ml-1">*</span>
               </Label>
-              <Input 
-                id="title" 
-                placeholder="Brief description of the incident" 
-                value={formData.title} 
-                onChange={(e) => handleInputChange('title', e.target.value)} 
+              <Textarea 
+                id="description" 
+                placeholder="Provide detailed information about what happened, when, and any other relevant details..." 
+                value={formData.description} 
+                onChange={(e) => handleInputChange('description', e.target.value)} 
+                className="min-h-[120px] border-2 border-gray-200 focus:border-red-400 focus:ring-red-100 rounded-lg transition-all duration-200 hover:border-gray-300 resize-none" 
                 required 
-                className="border-2 border-gray-200 focus:border-red-400 focus:ring-red-100 rounded-lg transition-all duration-200 hover:border-gray-300"
               />
             </div>
-            <div className="space-y-3">
-              <Label htmlFor="category" className="text-sm font-semibold text-gray-700 flex items-center">
-                Category
-                <span className="text-red-500 ml-1">*</span>
-              </Label>
-              <Select required value={formData.category} onValueChange={(value) => handleInputChange('category', value)}>
-                <SelectTrigger className="border-2 border-gray-200 focus:border-red-400 focus:ring-red-100 rounded-lg transition-all duration-200 hover:border-gray-300">
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent className="rounded-lg border-2 shadow-lg">
-                  {categories.map((category) => (
-                    <SelectItem key={category} value={category} className="rounded-md hover:bg-red-50 focus:bg-red-50">
-                      {category}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
 
-          <div className="space-y-3">
-            <Label htmlFor="description" className="text-sm font-semibold text-gray-700 flex items-center">
-              Description
-              <span className="text-red-500 ml-1">*</span>
-            </Label>
-            <Textarea 
-              id="description" 
-              placeholder="Provide detailed information about what happened, when, and any other relevant details..." 
-              value={formData.description} 
-              onChange={(e) => handleInputChange('description', e.target.value)} 
-              className="min-h-[120px] border-2 border-gray-200 focus:border-red-400 focus:ring-red-100 rounded-lg transition-all duration-200 hover:border-gray-300 resize-none" 
-              required 
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-3">
-              <Label htmlFor="location" className="text-sm font-semibold text-gray-700 flex items-center">
-                Location
-                <span className="text-red-500 ml-1">*</span>
-              </Label>
-              <div className="relative">
-                <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <Input 
-                  id="location" 
-                  placeholder="Specific address or landmark" 
-                  value={formData.location} 
-                  onChange={(e) => handleInputChange('location', e.target.value)} 
-                  className="pl-12 border-2 border-gray-200 focus:border-red-400 focus:ring-red-100 rounded-lg transition-all duration-200 hover:border-gray-300" 
-                  required 
-                />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-3">
+                <Label htmlFor="location" className="text-sm font-semibold text-gray-700 flex items-center">
+                  Location
+                  <span className="text-red-500 ml-1">*</span>
+                </Label>
+              <OpenStreetMapLocationSelector 
+                selectedLocation={typeof formData.location === 'object' ? formData.location.label : formData.location}
+                onLocationChange={(loc) => {
+                  // loc is { label, latitude, longitude }
+                  handleInputChange('location', loc);
+                }}
+              />
+              </div>
+              <div className="space-y-3">
+                <Label htmlFor="threatLevel" className="text-sm font-semibold text-gray-700 flex items-center">
+                  Threat Level
+                  <span className="text-red-500 ml-1">*</span>
+                </Label>
+                <Select required value={formData.threatLevel} onValueChange={(value) => handleInputChange('threatLevel', value)}>
+                  <SelectTrigger className="border-2 border-gray-200 focus:border-red-400 focus:ring-red-100 rounded-lg transition-all duration-200 hover:border-gray-300">
+                    <SelectValue placeholder="Select threat level" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-lg border-2 shadow-lg">
+                    {threatLevels.map((level) => (
+                      <SelectItem key={level.value} value={level.value} className="rounded-md hover:bg-red-50 focus:bg-red-50">
+                        <span className={`font-medium ${level.color}`}>{level.label}</span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
-            <div className="space-y-3">
-              <Label htmlFor="threatLevel" className="text-sm font-semibold text-gray-700 flex items-center">
-                Threat Level
-                <span className="text-red-500 ml-1">*</span>
-              </Label>
-              <Select required value={formData.threatLevel} onValueChange={(value) => handleInputChange('threatLevel', value)}>
-                <SelectTrigger className="border-2 border-gray-200 focus:border-red-400 focus:ring-red-100 rounded-lg transition-all duration-200 hover:border-gray-300">
-                  <SelectValue placeholder="Select threat level" />
-                </SelectTrigger>
-                <SelectContent className="rounded-lg border-2 shadow-lg">
-                  {threatLevels.map((level) => (
-                    <SelectItem key={level.value} value={level.value} className="rounded-md hover:bg-red-50 focus:bg-red-50">
-                      <span className={`font-medium ${level.color}`}>{level.label}</span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
 
-          <div className="space-y-4">
-            <Label className="text-sm font-semibold text-gray-700">Attachments</Label>
-            <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center bg-gradient-to-br from-gray-50 to-white hover:border-red-300 transition-all duration-300 hover:bg-gradient-to-br hover:from-red-50 hover:to-white">
-              <div className="flex flex-col items-center space-y-4">
-                <div className="p-4 rounded-full bg-gradient-to-r from-red-100 to-red-200">
-                  <Upload className="w-8 h-8 text-red-600" />
-                </div>
-                <div>
-                  <p className="text-lg font-medium text-gray-700 mb-1">Upload Evidence</p>
-                  <p className="text-sm text-gray-500">Max 5 files, 10MB each • Images & Videos supported</p>
-                </div>
-                <input 
-                  type="file" 
-                  multiple 
-                  accept="image/*,video/*" 
-                  onChange={handleFileSelect} 
-                  className="hidden" 
-                  id="file-upload" 
-                />
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={() => document.getElementById('file-upload').click()}
-                  className="bg-white hover:bg-red-50 border-red-200 text-red-600 hover:text-red-700 hover:border-red-300 transition-all duration-200"
-                >
-                  <Camera className="w-4 h-4 mr-2" />
-                  Choose Files
-                </Button>
+            {/* Map Viewer */}
+            <div className="space-y-3">
+              <Label className="text-sm font-semibold text-gray-700">Location Details</Label>
+              <div className="rounded-lg overflow-hidden border">
+                <SimpleMapViewer location={formData.location} />
               </div>
             </div>
-            
-            {previewUrls.length > 0 && (
-              <div className="bg-gray-50 rounded-xl p-4">
-                <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
-                  <FileImage className="w-4 h-4 mr-2" />
-                  Selected Files ({previewUrls.length})
-                </h4>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {previewUrls.map((preview, index) => (
-                    <div key={preview.url} className="relative group">
-                      <div className="aspect-square rounded-xl overflow-hidden bg-white shadow-md hover:shadow-lg transition-all duration-200 border-2 border-gray-100">
-                        {preview.type === 'image' ? (
-                          <img 
-                            src={preview.url} 
-                            alt={`Preview ${index + 1}`} 
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" 
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-gray-100 group-hover:bg-gray-200 transition-colors duration-200">
-                            <Video className="w-8 h-8 text-gray-400" />
-                          </div>
-                        )}
+
+            <div className="space-y-4">
+              <Label className="text-sm font-semibold text-gray-700">Attachments</Label>
+              <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center bg-gradient-to-br from-gray-50 to-white hover:border-red-300 transition-all duration-300 hover:bg-gradient-to-br hover:from-red-50 hover:to-white">
+                <div className="flex flex-col items-center space-y-4">
+                  <div className="p-4 rounded-full bg-gradient-to-r from-red-100 to-red-200">
+                    <Upload className="w-8 h-8 text-red-600" />
+                  </div>
+                  <div>
+                    <p className="text-base sm:text-lg font-medium text-gray-700 mb-1">Upload Evidence</p>
+                    <p className="text-xs sm:text-sm text-gray-500">Max 5 files, 10MB each • Images & Videos supported</p>
+                  </div>
+                  <input 
+                    type="file" 
+                    multiple 
+                    accept="image/*,video/*" 
+                    onChange={handleFileSelect} 
+                    className="hidden" 
+                    id="file-upload" 
+                  />
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => document.getElementById('file-upload').click()}
+                    className="bg-white hover:bg-red-50 border-red-200 text-red-600 hover:text-red-700 hover:border-red-300 transition-all duration-200"
+                  >
+                    <Camera className="w-4 h-4 mr-2" />
+                    Choose Files
+                  </Button>
+                </div>
+              </div>
+              {previewUrls.length > 0 && (
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
+                    <FileImage className="w-4 h-4 mr-2" />
+                    Selected Files ({previewUrls.length})
+                  </h4>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                    {previewUrls.map((preview, index) => (
+                      <div key={preview.url} className="relative group">
+                        <div className="aspect-square rounded-xl overflow-hidden bg-white shadow-md hover:shadow-lg transition-all duration-200 border-2 border-gray-100">
+                          {preview.type === 'image' ? (
+                            <img 
+                              src={preview.url} 
+                              alt={`Preview ${index + 1}`} 
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" 
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-gray-100 group-hover:bg-gray-200 transition-colors duration-200">
+                              <Video className="w-8 h-8 text-gray-400" />
+                            </div>
+                          )}
+                        </div>
+                        <button 
+                          type="button" 
+                          onClick={() => removeFile(index)} 
+                          className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-110"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
                       </div>
-                      <button 
-                        type="button" 
-                        onClick={() => removeFile(index)} 
-                        className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-110"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
-
-          <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={onClose} 
-              disabled={isSubmitting}
-              className="px-6 py-2 hover:bg-gray-50 border-gray-300 transition-all duration-200"
-            >
-              Cancel
-            </Button>
-            <Button 
-              type="submit" 
-              className="px-8 py-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105" 
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <div className="flex items-center">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Submitting...
-                </div>
-              ) : (
-                <>
-                  <AlertTriangle className="w-4 h-4 mr-2" />
-                  Submit Report
-                </>
               )}
-            </Button>
-          </div>
-        </form>
+            </div>
+
+            {/* Footer actions */}
+            <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-6 border-t border-gray-200 sticky bottom-0 bg-white pb-4">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={onClose} 
+                disabled={isSubmitting}
+                className="px-6 py-2 hover:bg-gray-50 border-gray-300 transition-all duration-200"
+              >
+                Cancel
+              </Button>
+              <Button 
+                type="submit" 
+                className="px-8 py-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 shadow-lg hover:shadow-xl transition-all duration-200"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <div className="flex items-center">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Submitting...
+                  </div>
+                ) : (
+                  <>
+                    <AlertTriangle className="w-4 h-4 mr-2" />
+                    Submit Report
+                  </>
+                )}
+              </Button>
+            </div>
+          </form>
+        </div>
       </DialogContent>
     </Dialog>
   );

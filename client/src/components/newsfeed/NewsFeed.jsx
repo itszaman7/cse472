@@ -12,6 +12,8 @@ export default function NewsFeed({ selectedCity, filterType }) {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [heatmap, setHeatmap] = useState([]);
+  const [leaderboard, setLeaderboard] = useState([]);
 
   useEffect(() => {
     setReports([]);
@@ -37,7 +39,7 @@ export default function NewsFeed({ selectedCity, filterType }) {
 
         const response = await axios.get('http://localhost:5000/posts', { params });
         
-        const { reports: fetchedReports, pagination: paginationData } = response.data;
+        const { reports: fetchedReports, pagination: paginationData, heatmap: hm, leaderboard: lb } = response.data;
         
         const formattedReports = fetchedReports.map(report => ({
           id: report._id,
@@ -51,13 +53,16 @@ export default function NewsFeed({ selectedCity, filterType }) {
           reportedBy: report.userEmail,
           comments: report.comments?.length || 0,
           verified: report.status === 'verified',
-          attachments: report.attachments || [], // ✅ THIS LINE IS NOW FIXED
+          attachments: report.attachments || [],
           reactions: report.reactions || [],
-          sentiment: report.sentiment || { overall: 'neutral' }
+          sentiment: report.sentiment || { overall: 'neutral' },
+          aiAnalysis: report.aiAnalysis || null
         }));
 
         setReports(prev => page === 1 ? formattedReports : [...prev, ...formattedReports]);
         setPagination(paginationData);
+        setHeatmap(hm || []);
+        setLeaderboard(lb || []);
 
       } catch (err) {
         console.error("Failed to fetch crime reports:", err);

@@ -3,6 +3,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import Link from 'next/link';
+import Heatmap from './Heatmap';
+import Leaderboard from './Leaderboard';
 import { 
   Filter, 
   Shield, 
@@ -12,7 +15,7 @@ import {
   Clock
 } from 'lucide-react';
 
-export default function Sidebar({ filterType, setFilterType, selectedCity }) {
+export default function Sidebar({ filterType, setFilterType, selectedCity, heatmapData = [], leaderboardData = [] }) {
   const filters = [
     { key: 'all', label: 'All Reports', count: 45 },
     { key: 'theft', label: 'Theft', count: 18 },
@@ -72,15 +75,15 @@ export default function Sidebar({ filterType, setFilterType, selectedCity }) {
         </CardHeader>
         <CardContent className="space-y-2">
           {filters.map((filter) => (
-            <Button
-              key={filter.key}
-              variant={filterType === filter.key ? "default" : "ghost"}
-              className="w-full justify-between"
-              onClick={() => setFilterType(filter.key)}
-            >
-              <span>{filter.label}</span>
-              <Badge variant="secondary">{filter.count}</Badge>
-            </Button>
+            <Link key={filter.key} href={`/c/${encodeURIComponent(filter.key)}`}>
+              <Button
+                variant={filterType === filter.key ? "default" : "ghost"}
+                className="w-full justify-between"
+              >
+                <span>c/{filter.key}</span>
+                <Badge variant="secondary">{filter.count}</Badge>
+              </Button>
+            </Link>
           ))}
         </CardContent>
       </Card>
@@ -115,6 +118,12 @@ export default function Sidebar({ filterType, setFilterType, selectedCity }) {
           </div>
         </CardContent>
       </Card>
+
+      {/* Heatmap summary */}
+      <Heatmap data={heatmapData} />
+
+      {/* Leaderboard */}
+      <Leaderboard data={leaderboardData} />
     </div>
   );
 }

@@ -5,6 +5,7 @@ import Footer from "../../components/Footer";
 import { SessionProvider } from "next-auth/react";
 import { UserProvider } from "@/context/UserContext";
 import { SearchProvider } from "@/context/SearchContext";
+import { NotificationsProvider } from "@/context/NotificationsContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,8 +35,9 @@ export default function RootLayout({ children }) {
         <SessionProvider>
           <UserProvider>
             <SearchProvider>
+            <NotificationsProvider>
             <nav>
-              {/* <NavBar /> */}
+              <NavBar />
             </nav>
 
             <div className="min-h-screen">{children}</div>
@@ -43,6 +45,7 @@ export default function RootLayout({ children }) {
             <footer>
               <Footer />
             </footer>
+            </NotificationsProvider>
             </SearchProvider>
           </UserProvider>
         </SessionProvider>

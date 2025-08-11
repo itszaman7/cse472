@@ -1,7 +1,7 @@
-"use client"; 
+"use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { useSession } from "next-auth/react";
+import { useSession, signOut as nextAuthSignOut } from "next-auth/react";
 
 const UserContext = createContext();
 
@@ -17,8 +17,16 @@ export const UserProvider = ({ children }) => {
     }
   }, [session, status]);
 
+  const signOut = async () => {
+    try {
+      await nextAuthSignOut({ callbackUrl: "/" });
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
+  };
+
   return (
-    <UserContext.Provider value={{ user, status }}>
+    <UserContext.Provider value={{ user, status, signOut }}>
       {children}
     </UserContext.Provider>
   );

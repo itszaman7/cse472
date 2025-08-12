@@ -4,6 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -11,8 +13,10 @@
   "license": "ISC",
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
+    "@vitalets/google-translate-api": "^9.2.1",
     "axios": "^1.10.0",
     "bcryptjs": "^3.0.2",
+    "cheerio": "^1.1.2",
     "cloudinary": "^2.7.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
@@ -21,7 +25,9 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.16.1",
     "multer": "^2.0.1",
+    "node-cron": "^4.2.1",
     "node-fetch": "^3.3.2",
+    "p-limit": "^6.2.0",
     "socket.io": "^4.8.1"
   },
   "devDependencies": {

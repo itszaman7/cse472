@@ -9,10 +9,18 @@ const Map = dynamic(() => import("@/components/newsfeed/HeatmapMap"), { ssr: fal
 export default function HeatmapPage() {
   const [data, setData] = useState([]);
   useEffect(() => {
+    console.log('HeatmapPage: Fetching data...');
     fetch("http://localhost:5000/posts?limit=1")
       .then((r) => r.json())
-      .then((d) => setData(d.heatmap || []))
-      .catch(() => setData([]));
+      .then((d) => {
+        console.log('HeatmapPage: Received data:', d);
+        console.log('HeatmapPage: Heatmap data:', d.heatmap);
+        setData(d.heatmap || []);
+      })
+      .catch((error) => {
+        console.error('HeatmapPage: Error fetching data:', error);
+        setData([]);
+      });
   }, []);
 
   return (

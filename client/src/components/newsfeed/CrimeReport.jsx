@@ -279,7 +279,7 @@ export default function CrimeReportCard({ report }) {
             </Button>
             
                          <Button
-               variant="ghost" size="sm" onClick={() => router.push(`/post/${report._id}`)}
+               variant="ghost" size="sm" onClick={() => router.push(`/post/${report.id}`)}
                className="text-gray-500 hover:text-blue-600"
              >
                <MessageCircle className="w-4 h-4 mr-1" />

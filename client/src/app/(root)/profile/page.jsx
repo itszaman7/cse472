@@ -102,7 +102,7 @@ export default function UserProfile() {
         });
         
         // Remove from local state
-        setUserPosts(prev => prev.filter(post => post._id !== postId));
+        setUserPosts(prev => prev.filter(post => post.id !== postId));
         
         // Update stats
         setStats(prev => ({
@@ -318,7 +318,7 @@ export default function UserProfile() {
           ) : (
             <div className="space-y-4">
               {userPosts.map((post) => (
-                <Card key={post._id} className="hover:shadow-lg transition-shadow duration-200">
+                <Card key={post.id} className="hover:shadow-lg transition-shadow duration-200">
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
@@ -418,13 +418,13 @@ export default function UserProfile() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-40">
-                            <DropdownMenuItem onClick={() => router.push(`/post/${post._id}`)}>
+                            <DropdownMenuItem onClick={() => router.push(`/post/${post.id}`)}>
                               <Eye className="w-4 h-4 mr-2" /> View
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => router.push(`/edit/${post._id}`)}>
+                            <DropdownMenuItem onClick={() => router.push(`/edit/${post.id}`)}>
                               <Edit className="w-4 h-4 mr-2" /> Edit
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleDeletePost(post._id)} className="text-red-600">
+                            <DropdownMenuItem onClick={() => handleDeletePost(post.id)} className="text-red-600">
                               <Trash2 className="w-4 h-4 mr-2" /> Delete
                             </DropdownMenuItem>
                           </DropdownMenuContent>

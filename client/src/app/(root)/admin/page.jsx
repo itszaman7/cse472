@@ -8,6 +8,7 @@ import UserManagement from '../../../components/admin-ui/UserManagement';
 import AIModelManagement from '../../../components/admin-ui/AiModelManagement';
 import Analytics from '../../../components/admin-ui/Analytics';
 import SystemSettings from '../../../components/admin-ui/SystemSettings';
+import NewsCrawler from '../../../components/admin-ui/NewsCrawler';
 
 export default function AdminPanel() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -17,6 +18,8 @@ export default function AdminPanel() {
     switch (activeTab) {
       case 'dashboard':
         return <Analytics />;
+      case 'news-crawler':
+        return <NewsCrawler />;
       case 'crime-management':
         return <CrimeManagement />;
       case 'user-management':

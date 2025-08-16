@@ -124,7 +124,31 @@ const NavBar = () => {
                   className="pl-10 pr-4 py-2 w-full rounded-full bg-gray-50 focus:bg-white"
                 />
                 {suggestions.length > 0 && (
+                  <div className="absolute z-50 mt-1 w-full bg-white border rounded-md shadow-lg max-h-60 overflow-auto">
+                    {/* Quick category links */}
+                    <div className="px-3 py-2 border-b border-gray-100">
+                      <div className="text-xs font-medium text-gray-500 mb-2">Quick Categories:</div>
+                      <div className="flex flex-wrap gap-1">
+                        {['theft', 'violence', 'vandalism', 'fraud'].map(cat => (
+                          <button
+                            key={cat}
+                            type="button"
+                            onClick={() => {
+                              setSearchQuery('');
+                              setSuggestions([]);
+                              window.location.href = `/c/${cat}`;
+                            }}
+                            className="px-2 py-1 text-xs bg-blue-50 text-blue-700 rounded hover:bg-blue-100"
+                          >
+                            c/{cat}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    {/* Search suggestions */}
                   <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-auto">
+
                     {suggestions.map((s, idx) => (
                       <button
                         key={`${s.type}-${idx}`}

@@ -8,7 +8,8 @@ import {
   Settings,
   Home,
   FileText,
-  Shield
+  Shield,
+  Globe
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -20,6 +21,12 @@ export default function AdminSidebar({ activeTab, setActiveTab, isOpen }) {
       label: 'Dashboard',
       icon: Home,
       badge: null
+    },
+    {
+      id: 'news-crawler',
+      label: 'News Crawler',
+      icon: Globe,
+      badge: 'NEW'
     },
     {
       id: 'crime-management',

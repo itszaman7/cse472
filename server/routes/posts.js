@@ -167,30 +167,59 @@ router.post("/", upload.array("attachments", 5), async (req, res) => {
       // Normalize location: accept either string or object {label, latitude, longitude}
       location: (() => {
         try {
-          if (typeof reportData.location === "string")
+          // Try to parse as JSON first (for location objects sent as JSON strings)
+          if (typeof reportData.location === "string") {
+            try {
+              const parsedLocation = JSON.parse(reportData.location);
+              if (typeof parsedLocation === "object" && parsedLocation.label) {
+                return parsedLocation.label;
+              }
+            } catch (parseError) {
+              // If JSON parsing fails, treat as regular string
+              return reportData.location;
+            }
             return reportData.location;
+          }
           if (typeof reportData.location === "object") {
             return reportData.location.label || "";
           }
           return "";
-        } catch {
+        } catch (error) {
+          console.error("Error processing location:", error);
           return reportData.location;
         }
       })(),
       coordinates: (() => {
         try {
+          let locationObj = reportData.location;
+
+          // Try to parse as JSON first
+          if (typeof reportData.location === "string") {
+            try {
+              const parsedLocation = JSON.parse(reportData.location);
+              if (typeof parsedLocation === "object") {
+                locationObj = parsedLocation;
+              }
+            } catch (parseError) {
+              // If JSON parsing fails, return null
+              return null;
+            }
+          }
+
           if (
-            typeof reportData.location === "object" &&
-            reportData.location.latitude &&
-            reportData.location.longitude
+            typeof locationObj === "object" &&
+            locationObj.latitude &&
+            locationObj.longitude
           ) {
-            return {
-              lat: Number(reportData.location.latitude),
-              lng: Number(reportData.location.longitude),
+            const coords = {
+              lat: Number(locationObj.latitude),
+              lng: Number(locationObj.longitude),
             };
+            return coords;
           }
           return null;
-        } catch {
+        } catch (error) {
+          console.error("Error processing coordinates:", error);
           return null;
         }
       })(),
@@ -228,11 +257,35 @@ router.post("/", upload.array("attachments", 5), async (req, res) => {
 // Get all reports
 router.get("/", async (req, res) => {
   try {
-    const { page = 1, limit = 10, city, category, threatLevel, q } = req.query;
+    const {
+      page = 1,
+      limit = 10,
+      city,
+      category,
+      threatLevel,
+      q,
+      sort = "new",
+    } = req.query;
     const reportsCollection = req.reportsCollection;
 
     let filter = {};
-    if (city) filter.city = city;
+    let cityFilter = null;
+
+    if (city) {
+      // Check both city field and location field for city filtering
+      // Also include posts that don't have specific city but are from the country
+      cityFilter = {
+        $or: [
+          { city: city },
+          { location: { $regex: city, $options: "i" } },
+          // Include news posts from Bangladesh when filtering for Dhaka
+          {
+            $and: [{ userEmail: "newsbot@system" }, { location: "Bangladesh" }],
+          },
+        ],
+      };
+    }
+
     if (category) {
       try {
         filter.category = new RegExp(`^${category}$`, "i");
@@ -241,6 +294,7 @@ router.get("/", async (req, res) => {
       }
     }
     if (threatLevel) filter.threatLevel = threatLevel;
+
     if (q) {
       filter.$or = [
         { title: { $regex: q, $options: "i" } },
@@ -250,16 +304,84 @@ router.get("/", async (req, res) => {
       ];
     }
 
+    // Combine city filter with other filters
+    // Always include news posts regardless of city
+    if (cityFilter) {
+      if (Object.keys(filter).length > 0) {
+        filter = {
+          $or: [
+            { $and: [cityFilter, filter] },
+            { userEmail: "newsbot@system" }, // Always include news posts
+          ],
+        };
+      } else {
+        filter = {
+          $or: [
+            cityFilter,
+            { userEmail: "newsbot@system" }, // Always include news posts
+          ],
+        };
+      }
+    } else if (Object.keys(filter).length > 0) {
+      // If no city filter but other filters exist, still include news posts
+      filter = {
+        $or: [
+          filter,
+          { userEmail: "newsbot@system" }, // Always include news posts
+        ],
+      };
+    } else {
+      // No filters at all, include everything
+      filter = {};
+    }
+
     const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    // Define sorting options
+    let sortOption = { createdAt: -1 }; // default: newest first
+    switch (sort) {
+      case "hot":
+        // Sort by engagement (reactions + comments) - we'll handle this in the application
+        sortOption = { createdAt: -1 };
+        break;
+      case "top":
+        // Sort by total engagement (reactions + comments) - we'll handle this in the application
+        sortOption = { createdAt: -1 };
+        break;
+      case "rising":
+        // Sort by recent engagement (posts with recent activity)
+        sortOption = { createdAt: -1 };
+        break;
+      case "new":
+      default:
+        sortOption = { createdAt: -1 };
+        break;
+    }
+
+    console.log("Posts API Filter:", JSON.stringify(filter, null, 2));
 
     const reports = await reportsCollection
       .find(filter)
-      .sort({ createdAt: -1 })
+      .sort(sortOption)
       .skip(skip)
       .limit(parseInt(limit))
       .toArray();
 
     const total = await reportsCollection.countDocuments(filter);
+
+    console.log("Posts API Results:", {
+      total,
+      returned: reports.length,
+      sampleReport: reports[0]
+        ? {
+            title: reports[0].title,
+            category: reports[0].category,
+            location: reports[0].location,
+            city: reports[0].city,
+            userEmail: reports[0].userEmail,
+          }
+        : null,
+    });
 
     // Aggregate heatmap data: prefer coordinates; fallback to location string counts
     const heatmap = await reportsCollection
@@ -416,6 +538,87 @@ router.patch("/:id/status", async (req, res) => {
     console.error("Failed to update report status:", error);
     res.status(500).json({
       message: "Error updating report status",
+    });
+  }
+});
+
+// Test endpoint to check news posts
+router.get("/test/news", async (req, res) => {
+  try {
+    const reportsCollection = req.reportsCollection;
+
+    // Check for news posts specifically
+    const newsPosts = await reportsCollection
+      .find({
+        $or: [{ category: "News" }, { userEmail: "newsbot@system" }],
+      })
+      .sort({ createdAt: -1 })
+      .limit(10)
+      .toArray();
+
+    // Also check total posts
+    const totalPosts = await reportsCollection.countDocuments({});
+    const totalNewsPosts = await reportsCollection.countDocuments({
+      $or: [{ category: "News" }, { userEmail: "newsbot@system" }],
+    });
+
+    res.json({
+      totalPosts,
+      totalNewsPosts,
+      newsPosts: newsPosts.map((post) => ({
+        id: post._id,
+        title: post.title,
+        category: post.category,
+        location: post.location,
+        city: post.city,
+        userEmail: post.userEmail,
+        createdAt: post.createdAt,
+      })),
+    });
+  } catch (error) {
+    console.error("Failed to fetch news posts:", error);
+    res.status(500).json({
+      message: "Error fetching news posts",
+      error: error.message,
+    });
+  }
+});
+
+// Test endpoint to check filtering
+router.get("/test/filter", async (req, res) => {
+  try {
+    const reportsCollection = req.reportsCollection;
+
+    // Test different filter scenarios
+    const scenarios = {
+      noFilter: await reportsCollection.countDocuments({}),
+      cityDhaka: await reportsCollection.countDocuments({ city: "Dhaka" }),
+      locationBangladesh: await reportsCollection.countDocuments({
+        location: "Bangladesh",
+      }),
+      categoryNews: await reportsCollection.countDocuments({
+        category: "News",
+      }),
+      newsbotUser: await reportsCollection.countDocuments({
+        userEmail: "newsbot@system",
+      }),
+      cityOrLocation: await reportsCollection.countDocuments({
+        $or: [
+          { city: "Dhaka" },
+          { location: { $regex: "Dhaka", $options: "i" } },
+        ],
+      }),
+    };
+
+    res.json({
+      scenarios,
+      samplePosts: await reportsCollection.find({}).limit(3).toArray(),
+    });
+  } catch (error) {
+    console.error("Failed to test filters:", error);
+    res.status(500).json({
+      message: "Error testing filters",
+      error: error.message,
     });
   }
 });

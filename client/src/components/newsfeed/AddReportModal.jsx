@@ -104,10 +104,36 @@ export default function AddReportModal({ isOpen, onClose, selectedCity }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validate location
+    if (!formData.location || (typeof formData.location === 'object' && !formData.location.label)) {
+      await Swal.fire({
+        icon: 'error',
+        title: 'Location Required',
+        text: 'Please select a valid location for the incident.',
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+        background: '#1f2937',
+        color: '#f3f4f6',
+        iconColor: '#ef4444'
+      });
+      return;
+    }
+    
     setIsSubmitting(true);
 
     const data = new FormData();
-    Object.keys(formData).forEach(key => data.append(key, formData[key]));
+    Object.keys(formData).forEach(key => {
+      if (key === 'location' && typeof formData[key] === 'object') {
+        // Handle location object properly
+        data.append('location', JSON.stringify(formData[key]));
+      } else {
+        data.append(key, formData[key]);
+      }
+    });
     data.append('userEmail', user ? user.email : 'anonymous');
     data.append('city', selectedCity);
     data.append('status', 'pending');
@@ -131,6 +157,7 @@ export default function AddReportModal({ isOpen, onClose, selectedCity }) {
       });
 
       setFormData({ title: '', description: '', location: '', category: '', threatLevel: '' });
+      setSelectedLocationData(null);
       setSelectedFiles([]);
       setPreviewUrls([]);
       onClose();
@@ -243,13 +270,16 @@ export default function AddReportModal({ isOpen, onClose, selectedCity }) {
                   Location
                   <span className="text-red-500 ml-1">*</span>
                 </Label>
-              <OpenStreetMapLocationSelector 
-                selectedLocation={typeof formData.location === 'object' ? formData.location.label : formData.location}
-                onLocationChange={(loc) => {
+                <div className="w-full">
+                  <OpenStreetMapLocationSelector 
+                    selectedLocation={typeof formData.location === 'object' ? formData.location.label : formData.location}
+                                    onLocationChange={(loc) => {
                   // loc is { label, latitude, longitude }
                   handleInputChange('location', loc);
                 }}
-              />
+                  />
+
+                </div>
               </div>
               <div className="space-y-3">
                 <Label htmlFor="threatLevel" className="text-sm font-semibold text-gray-700 flex items-center">

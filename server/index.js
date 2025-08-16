@@ -86,7 +86,7 @@ async function run() {
     app.use("/posts", reactionRoutes);
     app.use("/posts", authenticityRoutes);
     app.use("/api/reddit", redditRoutes);
-    app.use("/api", crawlerRoutes);
+    app.use("/crawler", crawlerRoutes);
     // --- Socket.io basic events ---
     io.on("connection", (socket) => {
       // Client will join a room per user email

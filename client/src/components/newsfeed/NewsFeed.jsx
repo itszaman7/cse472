@@ -39,6 +39,16 @@ export default function NewsFeed({ selectedCity, filterType }) {
 
         const response = await axios.get('http://localhost:5000/posts', { params });
         
+        console.log('NewsFeed API Response:', {
+          params,
+          totalReports: response.data.reports?.length || 0,
+          reports: response.data.reports?.map(r => ({
+            title: r.title,
+            userEmail: r.userEmail,
+            category: r.category
+          }))
+        });
+        
         const { reports: fetchedReports, pagination: paginationData, heatmap: hm, leaderboard: lb } = response.data;
         
         const formattedReports = fetchedReports.map(report => ({

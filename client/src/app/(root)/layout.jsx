@@ -36,12 +36,7 @@ export default function RootLayout({ children }) {
           <UserProvider>
             <SearchProvider>
             <NotificationsProvider>
-            <nav>
-              <NavBar />
-            </nav>
-
-            <div className="min-h-screen">{children}</div>
-
+            {children}
             <footer>
               <Footer />
             </footer>

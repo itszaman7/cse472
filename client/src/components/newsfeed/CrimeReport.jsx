@@ -65,7 +65,7 @@ export default function CrimeReportCard({ report }) {
   const router = useRouter();
   const [reactions, setReactions] = useState(report.reactions || []);
   const [showComments, setShowComments] = useState(false);
-  const [showAIDescription, setShowAIDescription] = useState(false);
+  const [showAIDescription, setShowAIDescription] = useState(true);
 
   const currentUserReaction = reactions.find(r => r.userName === user?.email)?.reactionType;
   const likeCount = reactions.filter(r => r.reactionType === '❤️').length;
@@ -159,7 +159,7 @@ export default function CrimeReportCard({ report }) {
   }
   
   return (
-    <Card className="w-full hover:shadow-lg transition-shadow duration-200">
+    <Card className="w-full max-w-none hover:shadow-lg transition-shadow duration-200">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex-1">

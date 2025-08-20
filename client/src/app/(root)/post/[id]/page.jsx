@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useUser } from '@/context/UserContext';
 import axios from 'axios';
+import Link from 'next/link';
 import { 
   ArrowLeft, 
   MapPin, 
@@ -15,23 +16,40 @@ import {
   Shield,
   User,
   Edit,
-  Trash2
+  Trash2,
+  Search,
+  Plus,
+  Bell,
+  Settings,
+  LogOut,
+  ChevronRight,
+  Menu,
+  ThumbsUp,
+  ThumbsDown
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Input } from '@/components/ui/input';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import AIAnalysisDisplay from '@/components/newsfeed/AIAnalysisDisplay';
 import CommentSection from '@/components/newsfeed/CommentSection';
+import FixedSidebar, { SidebarProvider, SidebarTrigger } from '@/components/newsfeed/FixedSidebar';
+import { useNotifications } from '@/context/NotificationsContext';
 import Swal from 'sweetalert2';
 
 export default function PostDetail() {
   const { id } = useParams();
   const router = useRouter();
   const { user } = useUser();
+  const { notifications, unread } = useNotifications();
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
   const [reactions, setReactions] = useState([]);
+  const [selectedCity, setSelectedCity] = useState('Dhaka');
+  const [heatmap, setHeatmap] = useState([]);
+  const [leaderboard, setLeaderboard] = useState([]);
 
   useEffect(() => {
     fetchPost();
@@ -177,10 +195,22 @@ export default function PostDetail() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
-        <span className="ml-3 text-gray-600">Loading post...</span>
-      </div>
+      <SidebarProvider defaultOpen={true}>
+        <div className="flex min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+          <FixedSidebar 
+            selectedCity={selectedCity}
+            heatmapData={heatmap}
+            leaderboardData={leaderboard}
+            onAddReport={() => {}}
+          />
+          <main className="flex-1 flex flex-col min-w-0 max-w-none">
+            <div className="flex-1 p-6 min-w-0 w-full max-w-none flex items-center justify-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
+              <span className="ml-3 text-gray-600">Loading post...</span>
+            </div>
+          </main>
+        </div>
+      </SidebarProvider>
     );
   }
 
@@ -189,8 +219,151 @@ export default function PostDetail() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto px-4">
+    <SidebarProvider defaultOpen={true}>
+      <div className="flex min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+        <FixedSidebar 
+          selectedCity={selectedCity}
+          heatmapData={heatmap}
+          leaderboardData={leaderboard}
+          onAddReport={() => {}}
+        />
+        
+        {/* Main Content Area */}
+        <main className="flex-1 flex flex-col min-w-0 max-w-none">
+          {/* Sticky Header - Complete Navigation */}
+          <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-sm border-b border-gray-200">
+            <div className="flex items-center justify-between p-4">
+              {/* Left side - Logo, trigger, and breadcrumb */}
+              <div className="flex items-center gap-4">
+                <SidebarTrigger />
+                <Link href="/" className="text-xl font-bold text-gray-900 hover:text-blue-600 transition-colors">
+                  CrimeShield
+                </Link>
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <ChevronRight className="h-4 w-4" />
+                  <span className="font-medium">Post Details</span>
+                </div>
+              </div>
+
+              {/* Center - Search bar */}
+              <div className="flex-1 max-w-md mx-4">
+                <form className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    type="text"
+                    placeholder="Search incidents, locations, categories..."
+                    className="pl-10 pr-4 py-2 w-full"
+                  />
+                </form>
+              </div>
+
+              {/* Right side - Actions and User */}
+              <div className="flex items-center space-x-3">
+                <Link href="/heatmap">
+                  <Button variant="outline" size="sm" className="text-blue-700 border-blue-200 hover:bg-blue-50">
+                    Heatmap
+                  </Button>
+                </Link>
+                <Link href="/leaderboard">
+                  <Button variant="outline" size="sm" className="text-blue-700 border-blue-200 hover:bg-blue-50">
+                    Leaderboard
+                  </Button>
+                </Link>
+                <Button 
+                  onClick={() => router.push('/report')}
+                  size="sm"
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Report Incident
+                </Button>
+                
+                {user ? (
+                  <>
+                    {/* Notification Bell */}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm" className="relative p-2 hover:bg-gray-100 rounded-lg">
+                          <Bell className="w-5 h-5 text-gray-600" />
+                          {unread > 0 && (
+                            <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 bg-red-500 rounded-full text-xs text-white flex items-center justify-center font-bold">
+                              {unread}
+                            </span>
+                          )}
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="w-80" align="end">
+                        <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        {unread === 0 ? (
+                          <div className="px-3 py-6 text-sm text-gray-500">No new notifications</div>
+                        ) : (
+                          notifications.slice(0, 10).map((n, i) => (
+                            <DropdownMenuItem key={`notification-${i}`} className="flex items-start">
+                              <div className="text-xs text-gray-500 mr-2">{new Date(n.at).toLocaleTimeString()}</div>
+                              <div className="flex-1">
+                                <div className="text-sm">{n.message}</div>
+                                <div className="text-xs text-gray-500">Type: {n.type}</div>
+                              </div>
+                            </DropdownMenuItem>
+                          ))
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+
+                    {/* User Avatar */}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="relative h-8 w-8 rounded-full p-0">
+                          <Avatar className="h-8 w-8">
+                            <AvatarImage src={user.image || ''} alt={user.name || user.email} />
+                            <AvatarFallback className="bg-red-500 text-white text-sm font-medium">
+                              {user.name?.charAt(0) || user.email?.charAt(0) || 'U'}
+                            </AvatarFallback>
+                          </Avatar>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="w-56" align="end" forceMount>
+                        <DropdownMenuLabel className="font-normal">
+                          <div className="flex flex-col space-y-1">
+                            <p className="text-sm font-medium leading-none">{user.name || 'Anonymous User'}</p>
+                            <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+                          </div>
+                        </DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem asChild>
+                          <Link href="/profile" className="flex items-center">
+                            <User className="mr-2 h-4 w-4" />
+                            <span>Profile</span>
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href="/settings" className="flex items-center">
+                            <Settings className="mr-2 h-4 w-4" />
+                            <span>Settings</span>
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => router.push('/api/auth/signout')} className="text-red-600">
+                          <LogOut className="mr-2 h-4 w-4" />
+                          <span>Log out</span>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </>
+                ) : (
+                  <Link href="/sign-in">
+                    <Button variant="outline" size="sm" className="border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white">
+                      Sign In
+                    </Button>
+                  </Link>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Main Content */}
+          <div className="flex-1 p-6 min-w-0 w-full max-w-none">
         {/* Back Button */}
         <Button
           variant="ghost"
@@ -310,23 +483,23 @@ export default function PostDetail() {
 
             {/* Reactions */}
             <div className="flex items-center space-x-4 pt-6 border-t border-gray-200">
-              <Button
-                variant="ghost"
-                onClick={() => handleReaction('❤️')}
-                className={`${currentUserReaction === '❤️' ? 'text-red-600' : 'text-gray-500'} hover:text-red-600`}
-              >
-                <Heart className={`w-5 h-5 mr-2 ${currentUserReaction === '❤️' ? 'fill-current' : ''}`} />
-                {likeCount}
-              </Button>
-              
-              <Button
-                variant="ghost"
-                onClick={() => handleReaction('👍')}
-                className={`${currentUserReaction === '👍' ? 'text-blue-600' : 'text-gray-500'} hover:text-blue-600`}
-              >
-                <Shield className={`w-5 h-5 mr-2 ${currentUserReaction === '👍' ? 'fill-current' : ''}`} />
-                {helpfulCount}
-              </Button>
+                             <Button
+                 variant="ghost"
+                 onClick={() => handleReaction('❤️')}
+                 className={`${currentUserReaction === '❤️' ? 'text-red-600' : 'text-gray-500'} hover:text-red-600`}
+               >
+                 <ThumbsUp className={`w-5 h-5 mr-2 ${currentUserReaction === '❤️' ? 'fill-current' : ''}`} />
+                 {likeCount}
+               </Button>
+               
+               <Button
+                 variant="ghost"
+                 onClick={() => handleReaction('👍')}
+                 className={`${currentUserReaction === '👍' ? 'text-blue-600' : 'text-gray-500'} hover:text-blue-600`}
+               >
+                 <ThumbsDown className={`w-5 h-5 mr-2 ${currentUserReaction === '👍' ? 'fill-current' : ''}`} />
+                 {helpfulCount}
+               </Button>
               
               <div className="flex items-center text-gray-500">
                 <MessageCircle className="w-5 h-5 mr-2" />
@@ -348,7 +521,9 @@ export default function PostDetail() {
             <CommentSection reportId={post._id} />
           </CardContent>
         </Card>
+          </div>
+        </main>
       </div>
-    </div>
+    </SidebarProvider>
   );
 } 

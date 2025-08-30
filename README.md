@@ -2,7 +2,7 @@
 
 A comprehensive crime reporting and analysis platform built with Next.js, Express.js, and AI-powered content analysis. The platform allows users to report crimes, analyze content for authenticity, detect deepfakes, and provides an admin panel for content management.
 
-## 🚀 Features
+## Features
 
 - **Crime Reporting**: Users can submit crime reports with images, videos, and detailed descriptions
 - **AI Content Analysis**: Automatic analysis of uploaded media for threat assessment and content verification
@@ -13,7 +13,7 @@ A comprehensive crime reporting and analysis platform built with Next.js, Expres
 - **Authentication**: Secure user authentication with NextAuth.js
 - **Responsive Design**: Modern UI built with Tailwind CSS and Radix UI
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 ### Frontend
 
@@ -39,7 +39,7 @@ A comprehensive crime reporting and analysis platform built with Next.js, Expres
 - **Hugging Face** - Deepfake detection
 - **Custom AI Models** - Text analysis and sentiment detection
 
-## 📋 Prerequisites
+## Prerequisites
 
 Before running this project, make sure you have the following installed:
 
@@ -47,7 +47,7 @@ Before running this project, make sure you have the following installed:
 - **npm** or **yarn** or **pnpm**
 - **Git**
 
-## 🚀 Quick Start
+## Quick Start
 
 ### 1. Clone the Repository
 
@@ -63,11 +63,11 @@ Install dependencies for both client and server:
 ```bash
 # Install client dependencies
 cd client
-npm install
+pnpm install
 
 # Install server dependencies
 cd ../server
-npm install
+pnpm install
 ```
 
 ### 3. Environment Setup
@@ -183,7 +183,7 @@ cse372/
 └── README.md
 ```
 
-## 🔧 Available Scripts
+## Available Scripts
 
 ### Client Scripts
 
@@ -212,7 +212,7 @@ npm run dev          # Start development server with nodemon
 npm start           # Start production server
 ```
 
-## 🎯 Key Features Explained
+## Key Features Explained
 
 ### Crime Reporting
 
@@ -243,7 +243,7 @@ npm start           # Start production server
 - **Analytics**: View platform statistics and insights
 - **System Settings**: Configure platform parameters
 
-## 🔐 Authentication
+## Authentication
 
 The application uses NextAuth.js for authentication with multiple providers:
 
@@ -251,13 +251,7 @@ The application uses NextAuth.js for authentication with multiple providers:
 - **Email/Password** (local authentication)
 - **Session management** with secure cookies
 
-## 📊 Database Schema
-
-### Client Database (SQLite)
-
-- **Users**: User accounts and authentication data
-- **Sessions**: User session management
-- **Accounts**: OAuth provider accounts
+## Database Schema
 
 ### Server Database (MongoDB)
 
@@ -265,20 +259,6 @@ The application uses NextAuth.js for authentication with multiple providers:
 - **Comments**: User comments on reports
 - **Reactions**: User reactions and interactions
 - **AI Analysis**: Stored AI analysis results
-
-## 🚨 Troubleshooting
-
-### Common Issues
-
-1. **Port Already in Use**
-
-   ```bash
-   # Kill process using port 5000
-   lsof -ti:5000 | xargs kill -9
-
-   # Kill process using port 5174
-   lsof -ti:5174 | xargs kill -9
-   ```
 
 2. **Database Connection Issues**
 
@@ -303,12 +283,12 @@ The application uses NextAuth.js for authentication with multiple providers:
 
 ### Development Tips
 
-- Use `npm run dev` for both client and server during development
+- Use `pnpm run dev` for both client and server during development
 - Check browser console and server logs for errors
 - Use Prisma Studio to inspect database data
 - Monitor network requests in browser dev tools
 
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repository
 2. Create a feature branch
@@ -316,18 +296,8 @@ The application uses NextAuth.js for authentication with multiple providers:
 4. Test thoroughly
 5. Submit a pull request
 
-## 📝 License
+## License
 
 This project is licensed under the MIT License.
 
-## 🆘 Support
-
-For support and questions:
-
-- Check the troubleshooting section above
-- Review the code comments and documentation
-- Create an issue in the repository
-
 ---
-
-**Note**: This is a development setup. For production deployment, additional security measures, environment configurations, and performance optimizations should be implemented.

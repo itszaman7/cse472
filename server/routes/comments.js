@@ -3,6 +3,8 @@ const router = express.Router();
 const { ObjectId } = require("mongodb");
 const axios = require("axios");
 const { analyzeAndUpdateSentiment } = require("../services/sentimentService");
+const { detectAIGeneratedText } = require("../services/aiDetectionService");
+const { detectDeepfakeFromUrl } = require("../services/deepfakeService");
 // Add comment to report
 router.post("/:id/comments", async (req, res) => {
   try {
@@ -23,11 +25,71 @@ router.post("/:id/comments", async (req, res) => {
       });
     }
 
+    // AI Detection for comment
+    let aiDetection = { success: false, isAIGenerated: false, confidence: 0 };
+    try {
+      console.log("Checking comment for AI generation...");
+      aiDetection = await detectAIGeneratedText(comment.trim());
+      console.log("AI detection result:", aiDetection);
+    } catch (error) {
+      console.error("AI detection failed for comment:", error);
+      // non-blocking
+    }
+
+    // Deepfake detection for comment (if there are any image URLs in the comment)
+    let deepfakeDetection = { success: false, anyFlagged: false, items: [] };
+    try {
+      // Extract URLs from comment text
+      const urlRegex = /(https?:\/\/[^\s]+\.(?:jpg|jpeg|png|gif|webp))/gi;
+      const imageUrls = comment.match(urlRegex);
+
+      if (imageUrls && imageUrls.length > 0) {
+        console.log("Checking comment images for deepfake...");
+        const deepfakeResults = [];
+
+        for (const imageUrl of imageUrls) {
+          try {
+            const result = await detectDeepfakeFromUrl(imageUrl);
+            if (
+              result.success &&
+              result.isDeepfake &&
+              result.confidence >= 0.7
+            ) {
+              deepfakeResults.push({
+                url: imageUrl,
+                isDeepfake: true,
+                confidence: result.confidence,
+                label: result.label,
+              });
+            }
+          } catch (error) {
+            console.error(
+              "Deepfake detection failed for image:",
+              imageUrl,
+              error
+            );
+          }
+        }
+
+        deepfakeDetection = {
+          success: true,
+          anyFlagged: deepfakeResults.length > 0,
+          items: deepfakeResults,
+        };
+        console.log("Deepfake detection result:", deepfakeDetection);
+      }
+    } catch (error) {
+      console.error("Deepfake detection failed for comment:", error);
+      // non-blocking
+    }
+
     const newComment = {
       id: new ObjectId(),
       userName: userName.trim(),
       comment: comment.trim(),
       createdAt: new Date(),
+      aiDetection: aiDetection,
+      deepfakeDetection: deepfakeDetection,
     };
 
     const result = await reportsCollection.updateOne(

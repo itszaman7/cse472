@@ -215,19 +215,8 @@ export default function FixedSidebar({
       </SidebarContent>
 
       <SidebarFooter>
-        <div className="p-2 space-y-2">
-          <Button variant="outline" size="sm" className="w-full" asChild>
-            <Link href="/admin">
-              <Settings className="h-4 w-4 mr-2" />
-              <span>Admin Panel</span>
-            </Link>
-          </Button>
-          <Button variant="ghost" size="sm" className="w-full" asChild>
-            <Link href="/profile">
-              <User className="h-4 w-4 mr-2" />
-              <span>Profile</span>
-            </Link>
-          </Button>
+        <div className="p-2">
+          {/* Footer content can be added here if needed */}
         </div>
       </SidebarFooter>
     </Sidebar>

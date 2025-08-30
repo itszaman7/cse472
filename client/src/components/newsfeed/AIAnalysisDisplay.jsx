@@ -10,7 +10,9 @@ import {
   TrendingUp,
   CheckCircle,
   XCircle,
-  Clock
+  Clock,
+  Bot,
+  User
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -123,6 +125,66 @@ const AIAnalysisDisplay = ({ aiAnalysis }) => {
                   {badge}
                 </Badge>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* AI Detection Results */}
+        {aiAnalysis.aiDetection && aiAnalysis.aiDetection.hasAIGeneratedContent && (
+          <div className="mb-4">
+            <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center">
+              <Bot className="w-4 h-4 mr-2 text-orange-600" />
+              AI-Generated Content Detected
+            </h4>
+            <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-orange-800">
+                  Confidence: {Math.round(aiAnalysis.aiDetection.overallConfidence * 100)}%
+                </span>
+                <Badge variant="outline" className="bg-orange-100 text-orange-700 border-orange-300">
+                  AI Detected
+                </Badge>
+              </div>
+              <div className="text-sm text-orange-700">
+                <p className="mb-1">Flagged fields:</p>
+                <ul className="list-disc list-inside space-y-1">
+                  {aiAnalysis.aiDetection.flaggedFields.map((field, index) => (
+                    <li key={index}>
+                      {field.field}: {Math.round(field.confidence * 100)}% confidence
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Deepfake Detection Results */}
+        {aiAnalysis.deepfake && aiAnalysis.deepfake.anyFlagged && (
+          <div className="mb-4">
+            <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center">
+              <AlertTriangle className="w-4 h-4 mr-2 text-red-600" />
+              Deepfake Content Detected
+            </h4>
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-red-800">
+                  Deepfake Images Found
+                </span>
+                <Badge variant="outline" className="bg-red-100 text-red-700 border-red-300">
+                  Deepfake
+                </Badge>
+              </div>
+              <div className="text-sm text-red-700">
+                <p className="mb-1">Flagged images:</p>
+                <ul className="list-disc list-inside space-y-1">
+                  {aiAnalysis.deepfake.items.map((item, index) => (
+                    <li key={index}>
+                      Image {index + 1}: {item.label} ({Math.round(item.confidence * 100)}% confidence)
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
           </div>
         )}

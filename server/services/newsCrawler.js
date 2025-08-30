@@ -29,6 +29,11 @@ const {
   analyzeMediaBatch,
   analyzeTextDescription,
 } = require("./geminiService");
+const { detectDeepfakeFromUrl } = require("./deepfakeService");
+const {
+  analyzeTextForAI,
+  getAIDetectionSummary,
+} = require("./aiDetectionService");
 
 // --- Crawl control (supports graceful stop) ---
 const crawlControl = {
@@ -412,6 +417,11 @@ async function buildPostFromArticle(article, enableAI = true) {
     aiGeneratedBadges: [],
     aiThreatLevel: "Low",
     deepfake: { anyFlagged: false, items: [] },
+    aiDetection: {
+      hasAIGeneratedContent: false,
+      flaggedFields: [],
+      overallConfidence: 0,
+    },
   };
 
   // Only perform AI analysis if enabled
@@ -428,6 +438,36 @@ async function buildPostFromArticle(article, enableAI = true) {
           aiResults.aiGeneratedBadges = batch.analysis.crimeBadges || [];
           aiResults.overallCertainty = batch.analysis.certaintyPercentage || 0;
           aiResults.aiThreatLevel = batch.analysis.threatLevel || "Low";
+        }
+
+        // Deepfake detection for crawled images
+        for (const att of attachments) {
+          if (att.file_type === "image") {
+            try {
+              console.log(`Checking crawled image for deepfake: ${att.url}`);
+              const df = await detectDeepfakeFromUrl(att.url);
+              if (df.success) {
+                aiResults.deepfake.items.push({
+                  url: att.url,
+                  label: df.label,
+                  score: df.score,
+                  confidence: df.confidence,
+                });
+                if (
+                  df.label?.toLowerCase().includes("deepfake") &&
+                  df.confidence >= 0.7
+                ) {
+                  aiResults.deepfake.anyFlagged = true;
+                }
+              }
+            } catch (e) {
+              console.error(
+                "Deepfake detection error for crawled image:",
+                e.message
+              );
+              // non-blocking
+            }
+          }
         }
       } catch {}
     }
@@ -448,6 +488,31 @@ async function buildPostFromArticle(article, enableAI = true) {
           }
         }
       } catch {}
+
+      // AI Text Detection for crawled content
+      try {
+        console.log("Checking crawled content for AI generation...");
+        const textFields = {};
+        if (translatedTitle) textFields.title = translatedTitle;
+        if (translatedText) textFields.description = translatedText;
+
+        const aiTextResults = await analyzeTextForAI(textFields);
+        const aiSummary = getAIDetectionSummary(aiTextResults);
+
+        aiResults.aiDetection = aiSummary;
+        aiResults.textAnalysis = {
+          ...aiResults.textAnalysis,
+          aiDetection: aiTextResults,
+        };
+
+        console.log(
+          "AI text detection completed for crawled content:",
+          aiSummary
+        );
+      } catch (error) {
+        console.error("AI text detection failed for crawled content:", error);
+        // non-blocking
+      }
     }
 
     if (aiResults.textAnalysis?.riskAssessment?.threatLevel) {

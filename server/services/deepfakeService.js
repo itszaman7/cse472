@@ -1,42 +1,84 @@
 const axios = require("axios");
 
 /**
- * Uses Hugging Face Inference API to classify whether an image is deepfake.
- * Model: prithivMLmods/Deep-Fake-Detector-v2-Model
+ * Uses Hugging Face Space API to detect deepfake images.
+ * Space: aaronespasa-deepfake-detection
  * Returns { success, label, score }
  */
 async function detectDeepfakeFromUrl(imageUrl) {
-  const apiToken = process.env.HF_API_TOKEN;
-  if (!apiToken) {
-    return { success: false, error: "HF_API_TOKEN missing" };
-  }
-
   try {
-    // Fetch image as arraybuffer then send to HF API
-    const img = await axios.get(imageUrl, { responseType: "arraybuffer" });
+    // Fetch image as arraybuffer
+    const imgResponse = await axios.get(imageUrl, {
+      responseType: "arraybuffer",
+    });
 
-    const res = await axios.post(
-      "https://api-inference.huggingface.co/models/prithivMLmods/Deep-Fake-Detector-v2-Model",
-      img.data,
+    // Convert to base64
+    const base64Image = Buffer.from(imgResponse.data).toString("base64");
+    const dataUrl = `data:image/png;base64,${base64Image}`;
+
+    // Call the Hugging Face Space API
+    const response = await axios.post(
+      "https://aaronespasa-deepfake-detection.hf.space/run/predict",
       {
-        headers: {
-          Authorization: `Bearer ${apiToken}`,
-          "Content-Type": "application/octet-stream",
-        },
+        data: [dataUrl, "deepfake_detection"],
+      },
+      {
+        headers: { "Content-Type": "application/json" },
         timeout: 30000,
       }
     );
 
-    // HF image-classification returns array of {label, score}
-    const predictions = Array.isArray(res.data) ? res.data : [];
-    const top = predictions.sort((a, b) => b.score - a.score)[0] || null;
-    if (!top) {
-      return { success: false, error: "No prediction returned" };
+    if (response.data && response.data.data) {
+      const result = response.data.data;
+      // The API returns the prediction result
+      return {
+        success: true,
+        label: result.label || "unknown",
+        score: result.score || 0,
+        confidence: result.confidence || 0,
+      };
+    } else {
+      return { success: false, error: "Invalid response format" };
     }
-    return { success: true, label: top.label, score: top.score };
   } catch (error) {
+    console.error("Deepfake detection error:", error.message);
     return { success: false, error: error.message };
   }
 }
 
-module.exports = { detectDeepfakeFromUrl };
+/**
+ * Detect deepfake from base64 image data
+ */
+async function detectDeepfakeFromBase64(base64Data) {
+  try {
+    const dataUrl = `data:image/png;base64,${base64Data}`;
+
+    const response = await axios.post(
+      "https://aaronespasa-deepfake-detection.hf.space/run/predict",
+      {
+        data: [dataUrl, "deepfake_detection"],
+      },
+      {
+        headers: { "Content-Type": "application/json" },
+        timeout: 30000,
+      }
+    );
+
+    if (response.data && response.data.data) {
+      const result = response.data.data;
+      return {
+        success: true,
+        label: result.label || "unknown",
+        score: result.score || 0,
+        confidence: result.confidence || 0,
+      };
+    } else {
+      return { success: false, error: "Invalid response format" };
+    }
+  } catch (error) {
+    console.error("Deepfake detection error:", error.message);
+    return { success: false, error: error.message };
+  }
+}
+
+module.exports = { detectDeepfakeFromUrl, detectDeepfakeFromBase64 };

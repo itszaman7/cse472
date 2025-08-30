@@ -17,7 +17,8 @@ import {
   TrendingUp,
   MessageCircle,
   Heart,
-  MoreVertical
+  MoreVertical,
+  Bot
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -317,8 +318,8 @@ export default function UserProfile() {
             </Card>
           ) : (
             <div className="space-y-4">
-              {userPosts.map((post) => (
-                <Card key={post.id} className="hover:shadow-lg transition-shadow duration-200">
+              {userPosts.map((post, index) => (
+                <Card key={post._id || post.id || `post-${index}`} className="hover:shadow-lg transition-shadow duration-200">
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
@@ -330,11 +331,27 @@ export default function UserProfile() {
                           <Badge variant="outline">
                             {post.category}
                           </Badge>
-                          {post.aiAnalysis?.aiGeneratedBadges?.map((badge, index) => (
-                            <Badge key={index} variant="outline" className="bg-red-50 text-red-700 border-red-200">
-                              {badge}
-                            </Badge>
-                          ))}
+                                                     {post.aiAnalysis?.aiGeneratedBadges?.map((badge, badgeIndex) => (
+                             <Badge key={`${post._id || post.id || 'unknown'}-badge-${badgeIndex}`} variant="outline" className="bg-red-50 text-red-700 border-red-200">
+                               {badge}
+                             </Badge>
+                           ))}
+                           
+                                                       {/* Deepfake Detection Badge */}
+                            {post.aiAnalysis?.deepfake?.anyFlagged === true && (
+                              <Badge variant="outline" className="bg-red-100 text-red-700 border-red-300">
+                                <AlertTriangle className="w-3 h-3 mr-1" />
+                                Deepfake Detected
+                              </Badge>
+                            )}
+                            
+                                                         {/* AI-Generated Content Badge */}
+                             {post.aiAnalysis?.aiDetection?.hasAIGeneratedContent === true && (
+                               <Badge variant="outline" className="bg-orange-100 text-orange-700 border-orange-300">
+                                 <Bot className="w-3 h-3 mr-1" />
+                                 AI Generated
+                               </Badge>
+                             )}
                         </div>
 
                         {/* Title and Media Preview */}
@@ -418,13 +435,13 @@ export default function UserProfile() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-40">
-                            <DropdownMenuItem onClick={() => router.push(`/post/${post.id}`)}>
+                            <DropdownMenuItem onClick={() => router.push(`/post/${post._id || post.id}`)}>
                               <Eye className="w-4 h-4 mr-2" /> View
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => router.push(`/edit/${post.id}`)}>
+                            <DropdownMenuItem onClick={() => router.push(`/edit/${post._id || post.id}`)}>
                               <Edit className="w-4 h-4 mr-2" /> Edit
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleDeletePost(post.id)} className="text-red-600">
+                            <DropdownMenuItem onClick={() => handleDeletePost(post._id || post.id)} className="text-red-600">
                               <Trash2 className="w-4 h-4 mr-2" /> Delete
                             </DropdownMenuItem>
                           </DropdownMenuContent>

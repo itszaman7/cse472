@@ -9,6 +9,7 @@ import AIModelManagement from '../../../components/admin-ui/AiModelManagement';
 import Analytics from '../../../components/admin-ui/Analytics';
 import SystemSettings from '../../../components/admin-ui/SystemSettings';
 import NewsCrawler from '../../../components/admin-ui/NewsCrawler';
+import CrawlerPostManagement from '../../../components/admin-ui/CrawlerPostManagement';
 
 export default function AdminPanel() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -20,6 +21,8 @@ export default function AdminPanel() {
         return <Analytics />;
       case 'news-crawler':
         return <NewsCrawler />;
+      case 'crawler-posts':
+        return <CrawlerPostManagement />;
       case 'crime-management':
         return <CrimeManagement />;
       case 'user-management':
@@ -47,8 +50,18 @@ export default function AdminPanel() {
           isOpen={sidebarOpen}
         />
         
-        <main className={`flex-1 transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-16'}`}>
-          <div className="p-6">
+        {/* Mobile overlay */}
+        {sidebarOpen && (
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50 z-30 sm:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+        
+        <main className={`flex-1 transition-all duration-300 ${
+          sidebarOpen ? 'ml-0 sm:ml-64' : 'ml-0 sm:ml-16'
+        }`}>
+          <div className="p-4 sm:p-6">
             {renderContent()}
           </div>
         </main>

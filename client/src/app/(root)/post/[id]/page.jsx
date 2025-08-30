@@ -25,7 +25,8 @@ import {
   ChevronRight,
   Menu,
   ThumbsUp,
-  ThumbsDown
+  ThumbsDown,
+  Bot
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -392,6 +393,22 @@ export default function PostDetail() {
                       {badge}
                     </Badge>
                   ))}
+                  
+                                     {/* Deepfake Detection Badge */}
+                   {post.aiAnalysis?.deepfake?.anyFlagged === true && (
+                     <Badge variant="outline" className="bg-red-100 text-red-700 border-red-300">
+                       <AlertTriangle className="w-3 h-3 mr-1" />
+                       Deepfake Detected
+                     </Badge>
+                   )}
+                   
+                   {/* AI-Generated Content Badge */}
+                   {post.aiAnalysis?.aiDetection?.hasAIGeneratedContent === true && (
+                     <Badge variant="outline" className="bg-orange-100 text-orange-700 border-orange-300">
+                       <Bot className="w-3 h-3 mr-1" />
+                       AI Generated
+                     </Badge>
+                   )}
                 </div>
                 
                 <h1 className="text-3xl font-bold text-gray-900 mb-4">
@@ -443,10 +460,31 @@ export default function PostDetail() {
             </div>
           </CardHeader>
           
-          <CardContent>
-            <p className="text-gray-700 text-lg leading-relaxed mb-6">
-              {post.description}
-            </p>
+                     <CardContent>
+             <div className="mb-6">
+               <p className="text-gray-700 text-lg leading-relaxed">
+                 {post.description}
+               </p>
+               
+               {/* Description AI Detection Badges */}
+               <div className="flex items-center gap-2 mt-4 pt-4 border-t border-gray-200">
+                 {/* AI-Generated Content Badge for Description */}
+                 {post.aiAnalysis?.aiDetection?.hasAIGeneratedContent === true && (
+                   <Badge variant="outline" className="bg-orange-100 text-orange-700 border-orange-300">
+                     <Bot className="w-3 h-3 mr-1" />
+                     AI Generated Description
+                   </Badge>
+                 )}
+                 
+                 {/* Deepfake Detection Badge for Description */}
+                 {post.aiAnalysis?.deepfake?.anyFlagged === true && (
+                   <Badge variant="outline" className="bg-red-100 text-red-700 border-red-300">
+                     <AlertTriangle className="w-3 h-3 mr-1" />
+                     Deepfake in Description
+                   </Badge>
+                 )}
+               </div>
+             </div>
 
             {/* Attachments */}
             {post.attachments && post.attachments.length > 0 && (

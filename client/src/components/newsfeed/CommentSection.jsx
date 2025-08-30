@@ -6,7 +6,7 @@ import { useUser } from '@/context/UserContext'; // Assuming you have a user con
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Send, Reply, Loader2 } from 'lucide-react';
+import { Send, Reply, Loader2, Bot, User, AlertTriangle } from 'lucide-react';
 
 export default function CommentSection({ reportId }) {
   const [comments, setComments] = useState([]);
@@ -148,6 +148,38 @@ setSubmitting(false);
                   <p className="text-sm text-gray-700 mt-1">
                     {comment.comment}
                   </p>
+                  
+                  {/* AI Detection Badge */}
+                  {comment.aiDetection && comment.aiDetection.success && comment.aiDetection.isAIGenerated && (
+                    <div className="flex items-center space-x-2 mt-2">
+                      <div className="flex items-center space-x-1 px-2 py-1 bg-orange-100 text-orange-700 rounded-full text-xs">
+                        <Bot className="w-3 h-3" />
+                        <span>AI Generated</span>
+                        <span className="text-orange-600">
+                          ({Math.round(comment.aiDetection.confidence * 100)}% confidence)
+                        </span>
+                      </div>
+                      {comment.aiDetection.details?.aiGeneratedPercentage && (
+                        <div className="text-xs text-gray-500">
+                          {Math.round(comment.aiDetection.details.aiGeneratedPercentage * 100)}% of text appears AI-generated
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  
+                  {/* Deepfake Detection Badge */}
+                  {comment.deepfakeDetection && comment.deepfakeDetection.success && comment.deepfakeDetection.anyFlagged && (
+                    <div className="flex items-center space-x-2 mt-2">
+                      <div className="flex items-center space-x-1 px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs">
+                        <AlertTriangle className="w-3 h-3" />
+                        <span>Deepfake Detected</span>
+                        <span className="text-red-600">
+                          ({comment.deepfakeDetection.items.length} image{comment.deepfakeDetection.items.length !== 1 ? 's' : ''})
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                  
                   {/* Reply functionality can be implemented later */}
                   {/* <Button variant="ghost" size="sm" className="text-xs mt-1 h-6 px-2">
                     <Reply className="w-3 h-3 mr-1" />

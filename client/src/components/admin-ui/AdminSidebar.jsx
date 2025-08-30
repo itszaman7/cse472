@@ -9,7 +9,8 @@ import {
   Home,
   FileText,
   Shield,
-  Globe
+  Globe,
+  Database
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -27,6 +28,12 @@ export default function AdminSidebar({ activeTab, setActiveTab, isOpen }) {
       label: 'News Crawler',
       icon: Globe,
       badge: 'NEW'
+    },
+    {
+      id: 'crawler-posts',
+      label: 'Crawler Posts',
+      icon: Database,
+      badge: null
     },
     {
       id: 'crime-management',
@@ -57,7 +64,7 @@ export default function AdminSidebar({ activeTab, setActiveTab, isOpen }) {
   return (
     <aside className={`fixed left-0 top-16 h-full bg-white border-r border-gray-200 transition-all duration-300 z-40 ${
       isOpen ? 'w-64' : 'w-16'
-    }`}>
+    } ${!isOpen ? 'hidden sm:block' : 'block'}`}>
       <div className="p-4">
         <nav className="space-y-2">
           {menuItems.map((item) => {

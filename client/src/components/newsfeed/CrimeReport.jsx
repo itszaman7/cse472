@@ -16,7 +16,9 @@ import {
   CheckCircle,
   Smile, Frown, Meh,
   Brain,
-  Eye
+  Eye,
+  Bot,
+  User
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -177,6 +179,51 @@ export default function CrimeReportCard({ report }) {
                   {badge}
                 </Badge>
               ))}
+              
+              {/* Deepfake Detection Badge */}
+              {report.aiAnalysis?.deepfake?.anyFlagged === true && (
+                <Badge variant="outline" className="bg-red-100 text-red-700 border-red-300">
+                  <AlertTriangle className="w-3 h-3 mr-1" />
+                  Deepfake Detected
+                </Badge>
+              )}
+              
+              {/* Deepfake Check Status Badge - Only show if deepfake analysis was performed */}
+              {report.aiAnalysis?.deepfake && 
+               report.aiAnalysis.deepfake.items && 
+               report.aiAnalysis.deepfake.items.length > 0 && 
+               report.aiAnalysis.deepfake.anyFlagged === false && (
+                <Badge variant="outline" className="bg-green-100 text-green-700 border-green-300">
+                  <Shield className="w-3 h-3 mr-1" />
+                  Not Deepfake
+                </Badge>
+              )}
+              
+              {/* Deepfake Check Status Badge - When no images to check */}
+              {report.aiAnalysis?.deepfake && 
+               (!report.aiAnalysis.deepfake.items || report.aiAnalysis.deepfake.items.length === 0) && (
+                <Badge variant="outline" className="bg-gray-100 text-gray-700 border-gray-300">
+                  <Shield className="w-3 h-3 mr-1" />
+                  No Images to Check
+                </Badge>
+              )}
+              
+              {/* AI-Generated Content Badge */}
+              {report.aiAnalysis?.aiDetection?.hasAIGeneratedContent === true && (
+                <Badge variant="outline" className="bg-orange-100 text-orange-700 border-orange-300">
+                  <Bot className="w-3 h-3 mr-1" />
+                  AI Generated
+                </Badge>
+              )}
+              
+              {/* AI Detection Check Status Badge */}
+              {report.aiAnalysis?.aiDetection && report.aiAnalysis.aiDetection.hasAIGeneratedContent === false && (
+                <Badge variant="outline" className="bg-green-100 text-green-700 border-green-300">
+                  <User className="w-3 h-3 mr-1" />
+                  Human Content
+                </Badge>
+              )}
+              
               {report.verified && (
                 <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">
                   <CheckCircle className="w-3 h-3 mr-1" />
@@ -214,31 +261,71 @@ export default function CrimeReportCard({ report }) {
       </CardHeader>
 
       <CardContent className="pt-0">
-        {aiDescriptionText ? (
-          <div className="mb-4 rounded-md border bg-white">
-            <div className="flex items-center justify-between px-3 py-2 border-b">
-              <div className="flex items-center space-x-2">
-                <Brain className="w-4 h-4 text-blue-600" />
-                <span className="text-sm font-semibold text-blue-900">AI Analysis</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowAIDescription(prev => !prev)}
-                className="text-sm text-blue-600 hover:text-blue-700 flex items-center"
-              >
-                <Eye className="w-4 h-4 mr-1" />
-                {showAIDescription ? 'Hide' : 'Show'}
-              </button>
-            </div>
-            {showAIDescription && (
-              <div className="px-3 py-3">
-                <p className="text-gray-700 leading-relaxed">{aiDescriptionText}</p>
-              </div>
-            )}
-          </div>
-        ) : (
-          <p className="text-gray-700 mb-4 leading-relaxed">{report.description}</p>
-        )}
+                 {aiDescriptionText ? (
+           <div className="mb-4 rounded-md border bg-white">
+             <div className="flex items-center justify-between px-3 py-2 border-b">
+               <div className="flex items-center space-x-2">
+                 <Brain className="w-4 h-4 text-blue-600" />
+                 <span className="text-sm font-semibold text-blue-900">AI Analysis</span>
+               </div>
+               <button
+                 type="button"
+                 onClick={() => setShowAIDescription(prev => !prev)}
+                 className="text-sm text-blue-600 hover:text-blue-700 flex items-center"
+               >
+                 <Eye className="w-4 h-4 mr-1" />
+                 {showAIDescription ? 'Hide' : 'Show'}
+               </button>
+             </div>
+             {showAIDescription && (
+               <div className="px-3 py-3">
+                 <p className="text-gray-700 leading-relaxed">{aiDescriptionText}</p>
+                 
+                 {/* Description AI Detection Badges */}
+                 <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100">
+                   {/* AI-Generated Content Badge for Description */}
+                   {report.aiAnalysis?.aiDetection?.hasAIGeneratedContent === true && (
+                     <Badge variant="outline" className="bg-orange-100 text-orange-700 border-orange-300">
+                       <Bot className="w-3 h-3 mr-1" />
+                       AI Generated Description
+                     </Badge>
+                   )}
+                   
+                   {/* Deepfake Detection Badge for Description */}
+                   {report.aiAnalysis?.deepfake?.anyFlagged === true && (
+                     <Badge variant="outline" className="bg-red-100 text-red-700 border-red-300">
+                       <AlertTriangle className="w-3 h-3 mr-1" />
+                       Deepfake in Description
+                     </Badge>
+                   )}
+                 </div>
+               </div>
+             )}
+           </div>
+         ) : (
+           <div className="mb-4">
+             <p className="text-gray-700 leading-relaxed">{report.description}</p>
+             
+             {/* Description AI Detection Badges */}
+             <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100">
+               {/* AI-Generated Content Badge for Description */}
+               {report.aiAnalysis?.aiDetection?.hasAIGeneratedContent === true && (
+                 <Badge variant="outline" className="bg-orange-100 text-orange-700 border-orange-300">
+                   <Bot className="w-3 h-3 mr-1" />
+                   AI Generated Description
+                 </Badge>
+               )}
+               
+               {/* Deepfake Detection Badge for Description */}
+               {report.aiAnalysis?.deepfake?.anyFlagged === true && (
+                 <Badge variant="outline" className="bg-red-100 text-red-700 border-red-300">
+                   <AlertTriangle className="w-3 h-3 mr-1" />
+                   Deepfake in Description
+                 </Badge>
+               )}
+             </div>
+           </div>
+         )}
 
         {report.attachments && report.attachments.length > 0 && (
           <div className="mb-4 rounded-lg overflow-hidden bg-gray-100">

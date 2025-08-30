@@ -147,8 +147,6 @@ const NavBar = () => {
                     </div>
                     
                     {/* Search suggestions */}
-                  <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-auto">
-
                     {suggestions.map((s, idx) => (
                       <button
                         key={`${s.type}-${idx}`}

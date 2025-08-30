@@ -7,7 +7,14 @@ const {
   analyzeMediaBatch, // 👈 New, correct name
   analyzeTextDescription,
 } = require("../services/geminiService");
-const { detectDeepfakeFromUrl } = require("../services/deepfakeService");
+const {
+  detectDeepfakeFromUrl,
+  detectDeepfakeFromBase64,
+} = require("../services/deepfakeService");
+const {
+  analyzeTextForAI,
+  getAIDetectionSummary,
+} = require("../services/aiDetectionService");
 
 // Create new report
 router.post("/", upload.array("attachments", 5), async (req, res) => {
@@ -60,6 +67,11 @@ router.post("/", upload.array("attachments", 5), async (req, res) => {
       aiGeneratedBadges: [],
       aiThreatLevel: "Low",
       deepfake: { anyFlagged: false, items: [] },
+      aiDetection: {
+        hasAIGeneratedContent: false,
+        flaggedFields: [],
+        overallConfidence: 0,
+      },
     };
 
     // Analyze uploaded media files in a single batch
@@ -83,25 +95,57 @@ router.post("/", upload.array("attachments", 5), async (req, res) => {
         aiAnalysisResults.mediaAnalysis = { error: "AI analysis failed." };
       }
 
-      // Deepfake detection per image
+      // Deepfake detection per image using new API
       for (const att of attachmentUrls) {
         if (att.file_type === "image") {
           try {
+            console.log(`Checking for deepfake in image: ${att.url}`);
             const df = await detectDeepfakeFromUrl(att.url);
             if (df.success) {
               aiAnalysisResults.deepfake.items.push({
                 url: att.url,
                 label: df.label,
                 score: df.score,
+                confidence: df.confidence,
               });
-              if (df.label?.toLowerCase() === "deepfake" && df.score >= 0.75) {
+              // Check if deepfake is detected with high confidence
+              if (
+                df.label?.toLowerCase().includes("deepfake") &&
+                df.confidence >= 0.7
+              ) {
                 aiAnalysisResults.deepfake.anyFlagged = true;
               }
             }
           } catch (e) {
+            console.error("Deepfake detection error:", e.message);
             // non-blocking
           }
         }
+      }
+    }
+
+    // AI Text Detection for title and description
+    if (reportData.title || reportData.description) {
+      try {
+        console.log("Starting AI text detection...");
+        const textFields = {};
+        if (reportData.title) textFields.title = reportData.title;
+        if (reportData.description)
+          textFields.description = reportData.description;
+
+        const aiTextResults = await analyzeTextForAI(textFields);
+        const aiSummary = getAIDetectionSummary(aiTextResults);
+
+        aiAnalysisResults.aiDetection = aiSummary;
+        aiAnalysisResults.textAnalysis = {
+          ...aiAnalysisResults.textAnalysis,
+          aiDetection: aiTextResults,
+        };
+
+        console.log("AI text detection completed:", aiSummary);
+      } catch (error) {
+        console.error("AI text detection failed:", error);
+        // non-blocking
       }
     }
 
@@ -466,6 +510,37 @@ router.get("/", async (req, res) => {
   }
 });
 
+// Get all crawler posts (posts created by the news crawler)
+router.get("/crawler", async (req, res) => {
+  try {
+    const reportsCollection = req.reportsCollection;
+
+    // Find posts created by the news crawler (identified by userEmail or source)
+    const crawlerPosts = await reportsCollection
+      .find({
+        $or: [
+          { userEmail: "newsbot@system" },
+          { userEmail: "crawler@system" },
+          { source: "news_crawler" },
+          { source: "crawler" },
+          { createdBy: "crawler" },
+        ],
+      })
+      .sort({ createdAt: -1 })
+      .toArray();
+
+    res.json({
+      posts: crawlerPosts,
+      total: crawlerPosts.length,
+    });
+  } catch (error) {
+    console.error("Failed to fetch crawler posts:", error);
+    res.status(500).json({
+      message: "Error fetching crawler posts from the database",
+    });
+  }
+});
+
 // Get single report by ID
 router.get("/:id", async (req, res) => {
   try {
@@ -691,6 +766,61 @@ router.delete("/:id", async (req, res) => {
     console.error("Failed to delete post:", error);
     res.status(500).json({
       message: "Error deleting post from the database",
+    });
+  }
+});
+
+// Delete crawler post by ID (admin only)
+router.delete("/crawler/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const reportsCollection = req.reportsCollection;
+
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({
+        message: "Invalid post ID",
+      });
+    }
+
+    // Find the post first to verify it's a crawler post
+    const post = await reportsCollection.findOne({ _id: new ObjectId(id) });
+
+    if (!post) {
+      return res.status(404).json({
+        message: "Post not found",
+      });
+    }
+
+    // Check if it's a crawler post
+    const isCrawlerPost =
+      post.userEmail === "newsbot@system" ||
+      post.userEmail === "crawler@system" ||
+      post.source === "news_crawler" ||
+      post.source === "crawler" ||
+      post.createdBy === "crawler";
+
+    if (!isCrawlerPost) {
+      return res.status(403).json({
+        message: "This endpoint is only for deleting crawler posts",
+      });
+    }
+
+    // Delete the post
+    const result = await reportsCollection.deleteOne({ _id: new ObjectId(id) });
+
+    if (result.deletedCount === 0) {
+      return res.status(404).json({
+        message: "Post not found",
+      });
+    }
+
+    res.json({
+      message: "Crawler post deleted successfully",
+    });
+  } catch (error) {
+    console.error("Failed to delete crawler post:", error);
+    res.status(500).json({
+      message: "Error deleting crawler post from the database",
     });
   }
 });

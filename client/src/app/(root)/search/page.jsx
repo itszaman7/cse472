@@ -46,7 +46,7 @@ function SearchContent() {
         const categoryMatch = query.toLowerCase().startsWith("c/") ? query.slice(2) : null;
         const params = categoryMatch ? { category: categoryMatch } : { q: query };
         params.limit = 50;
-        const res = await axios.get("http://localhost:5000/posts", { params });
+        const res = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/posts`, { params });
         const fetched = res.data.reports || [];
         const formatted = fetched.map((report) => ({
           id: report._id,
@@ -93,7 +93,7 @@ function SearchContent() {
 
   const loadPopularCategories = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/posts", { 
+      const res = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/posts`, { 
         params: { limit: 100 } 
       });
       
@@ -120,7 +120,7 @@ function SearchContent() {
 
   const loadPopularSearches = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/posts", { 
+      const res = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/posts`, { 
         params: { limit: 50 } 
       });
       

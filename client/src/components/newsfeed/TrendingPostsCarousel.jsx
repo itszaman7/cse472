@@ -16,7 +16,8 @@ export default function TrendingPostsCarousel() {
   useEffect(() => {
     const fetchTrendingPosts = async () => {
       try {
-        const response = await fetch('http://localhost:5000/posts?sort=hot&limit=10');
+        console.log(`${process.env.NEXT_PUBLIC_NEXT_PUBLIC_BACKEND_API_URL}`);
+        const response = await fetch(`${process.env.NEXT_PUBLIC_NEXT_PUBLIC_BACKEND_API_URL}/posts?sort=hot&limit=10`);
         const data = await response.json();
         
         if (data.reports && data.reports.length > 0) {

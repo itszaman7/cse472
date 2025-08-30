@@ -57,7 +57,7 @@ const NavBar = () => {
     }
     try {
       const res = await fetch(
-        `http://localhost:5000/posts?q=${encodeURIComponent(val)}&limit=1`
+        `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/posts?q=${encodeURIComponent(val)}&limit=1`
       );
       const data = await res.json();
       setSuggestions(data.suggestions || []);

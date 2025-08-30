@@ -65,7 +65,7 @@ export default function NewsCrawler() {
   useEffect(() => {
     const fetchStatus = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/crawler/status');
+        const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/crawler/status`);
         setCrawlStatus(response.data);
         
         // Check if crawler is running based on multiple indicators
@@ -92,7 +92,7 @@ export default function NewsCrawler() {
   useEffect(() => {
     const fetchHistory = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/crawler/history');
+        const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/crawler/history`);
         setCrawlHistory(response.data.history || []);
       } catch (error) {
         console.error('Failed to fetch crawl history:', error);
@@ -119,7 +119,7 @@ export default function NewsCrawler() {
   const startCrawl = async () => {
     try {
       setIsRunning(true);
-      const response = await axios.post('http://localhost:5000/crawler/start', {
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/crawler/start`, {
         source: selectedSource === 'all' ? null : selectedSource,
         limit: crawlLimit,
         ai: enableAI
@@ -137,7 +137,7 @@ export default function NewsCrawler() {
   const stopCrawl = async () => {
     try {
       setIsStopping(true);
-      const response = await axios.post('http://localhost:5000/crawler/stop');
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/crawler/stop`);
       if (response.data.success) {
         console.log('Stop request sent successfully');
         // Don't set isRunning to false immediately - let the status check handle it
@@ -151,7 +151,7 @@ export default function NewsCrawler() {
   const forceStopCrawl = async () => {
     try {
       setIsStopping(true);
-      await axios.post('http://localhost:5000/crawler/stop');
+      await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/crawler/stop`);
       setCrawlStatus(null);
       console.log('Force stopped crawl');
       // Let the status check handle the running state
@@ -163,7 +163,7 @@ export default function NewsCrawler() {
 
   const viewCreatedPosts = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/posts?category=News&limit=20');
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/posts?category=News&limit=20`);
       setCreatedPosts(response.data.reports || []);
       setShowCreatedPosts(true);
     } catch (error) {
@@ -174,7 +174,7 @@ export default function NewsCrawler() {
   const previewCrawl = async () => {
     try {
       setShowPreview(true);
-      const response = await axios.post('http://localhost:5000/crawler/preview', {
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/crawler/preview`, {
         source: selectedSource === 'all' ? null : selectedSource,
         limit: crawlLimit
       });

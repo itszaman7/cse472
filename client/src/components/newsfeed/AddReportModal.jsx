@@ -140,7 +140,7 @@ export default function AddReportModal({ isOpen, onClose, selectedCity }) {
     selectedFiles.forEach(file => data.append('attachments', file));
 
     try {
-      await axios.post('http://localhost:5000/posts', data);
+      await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/posts`, data);
       
       await Swal.fire({
         icon: 'success',

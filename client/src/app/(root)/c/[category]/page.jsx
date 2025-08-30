@@ -52,7 +52,7 @@ export default function CategoryFeedPage() {
       });
 
       console.log('Fetching category data with params:', params.toString());
-      const response = await fetch(`http://localhost:5000/posts?${params}`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/posts?${params}`);
       const data = await response.json();
       
       console.log('Category API response:', data);
@@ -87,7 +87,7 @@ export default function CategoryFeedPage() {
 
   const fetchSidebarData = async () => {
     try {
-      const res = await fetch('http://localhost:5000/posts?limit=1');
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/posts?limit=1`)
       const data = await res.json();
       console.log('Sidebar data response:', data);
       setHeatmap(data.heatmap || []);
@@ -101,7 +101,7 @@ export default function CategoryFeedPage() {
   const testAPI = async () => {
     try {
       console.log('Testing API without category filter...');
-      const res = await fetch('http://localhost:5000/posts?limit=5');
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/posts?limit=5`);
       const data = await res.json();
       console.log('Test API response:', data);
       console.log('Total reports found:', data.reports?.length || 0);

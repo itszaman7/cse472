@@ -12,7 +12,9 @@ export const NotificationsProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([]);
 
   useEffect(() => {
-    const s = io("http://localhost:5000", { withCredentials: true });
+    const s = io(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}`, {
+      withCredentials: true,
+    });
     setSocket(s);
     return () => s.disconnect();
   }, []);

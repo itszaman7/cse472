@@ -19,7 +19,7 @@ export default function HeatmapPage() {
 
   useEffect(() => {
     console.log('HeatmapPage: Fetching data...');
-    fetch("http://localhost:5000/posts?limit=1")
+    fetch(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/posts?limit=1`)
       .then((r) => r.json())
       .then((d) => {
         console.log('HeatmapPage: Received data:', d);

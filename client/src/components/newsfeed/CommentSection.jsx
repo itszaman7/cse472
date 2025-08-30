@@ -26,7 +26,7 @@ export default function CommentSection({ reportId }) {
       setLoading(true);
       setError(null);
       try {
-        const response = await axios.get(`http://localhost:5000/posts/${reportId}`);
+        const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/posts/${reportId}`);
         // The comments are nested in the report object
         setComments(response.data.comments.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
       } catch (err) {
@@ -49,7 +49,7 @@ if (!newComment.trim() || !user) return;
  setSubmitting(true);
 
  try {
-const response = await axios.post(`http://localhost:5000/posts/${reportId}/comments`, {
+const response = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/posts/${reportId}/comments`, {
 
  // Your backend expects userName and comment
 

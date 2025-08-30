@@ -40,7 +40,7 @@ function RedditPost({ post, subreddit }) {
 
         setLoadingComments(true);
         try {
-            const response = await axios.get(`http://localhost:5000/api/reddit/comments/${subreddit}/${post.id}`);
+            const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/reddit/comments/${subreddit}/${post.id}`);
             setComments(response.data);
             setShowComments(true);
         } catch (error) {
@@ -182,7 +182,7 @@ export default function RedditFeed({ subreddit }) {
             setLoading(true);
             setError(null);
             try {
-                const response = await axios.get(`http://localhost:5000/api/reddit/${subreddit}?limit=10`);
+                const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/reddit/${subreddit}?limit=10`);
                 setPosts(response.data);
             } catch (err) {
                 setError(err.response?.data?.message || "Could not load posts.");

@@ -86,7 +86,7 @@ export default function CrimeReportCard({ report }) {
       newReactions = reactions.filter(r => r.userName !== userName);
       setReactions(newReactions);
       try {
-        await axios.delete(`http://localhost:5000/posts/${reportId}/reactions`, { data: { userName } });
+        await axios.delete(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/posts/${reportId}/reactions`, { data: { userName } });
       } catch (err) {
         console.error("Failed to remove reaction", err);
         setReactions(reactions);
@@ -98,7 +98,7 @@ export default function CrimeReportCard({ report }) {
       newReactions = [...otherReactions, newReaction];
       setReactions(newReactions);
       try {
-        await axios.post(`http://localhost:5000/posts/${reportId}/reactions`, { userName, reactionType });
+        await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/posts/${reportId}/reactions`, { userName, reactionType });
       } catch (err) {
         console.error("Failed to add reaction", err);
         setReactions(reactions);

@@ -37,7 +37,7 @@ export default function NewsFeed({ selectedCity, filterType }) {
           params.category = filterType;
         }
 
-        const response = await axios.get('http://localhost:5000/posts', { params });
+        const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/posts`, { params });
         
         console.log('NewsFeed API Response:', {
           params,

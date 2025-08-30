@@ -48,7 +48,7 @@ export default function NewsfeedPage({ session }) {
   useEffect(() => {
     const fetchAggs = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/posts', { params: { city: selectedCity, limit: 1 } });
+        const res = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/posts`, { params: { city: selectedCity, limit: 1 } });
         setHeatmap(res.data.heatmap || []);
         setLeaderboard(res.data.leaderboard || []);
       } catch (e) {

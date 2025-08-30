@@ -59,7 +59,7 @@ export default function PostDetail() {
   const fetchPost = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`http://localhost:5000/posts/${id}`);
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/posts/${id}`);
       setPost(response.data);
       setReactions(response.data.reactions || []);
     } catch (error) {
@@ -96,7 +96,7 @@ export default function PostDetail() {
       newReactions = reactions.filter(r => r.userName !== userName);
       setReactions(newReactions);
       try {
-        await axios.delete(`http://localhost:5000/posts/${id}/reactions`, { 
+        await axios.delete(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/${id}/reactions`, { 
           data: { userName } 
         });
       } catch (err) {
@@ -110,7 +110,7 @@ export default function PostDetail() {
       newReactions = [...otherReactions, newReaction];
       setReactions(newReactions);
       try {
-        await axios.post(`http://localhost:5000/posts/${id}/reactions`, { 
+        await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/posts/${id}/reactions`, { 
           userName, 
           reactionType 
         });

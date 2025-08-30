@@ -53,7 +53,7 @@ export default function CrawlerPostManagement() {
   const fetchCrawlerPosts = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:5000/posts/crawler');
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/posts/crawler`);
       setCrawlerPosts(response.data.posts || []);
     } catch (error) {
       console.error('Error fetching crawler posts:', error);
@@ -88,7 +88,7 @@ export default function CrawlerPostManagement() {
     if (result.isConfirmed) {
       try {
         setDeletingPost(postId);
-        await axios.delete(`http://localhost:5000/posts/crawler/${postId}`);
+        await axios.delete(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/posts/crawler/${postId}`);
         
         // Remove from local state
         setCrawlerPosts(prev => prev.filter(post => post._id !== postId));

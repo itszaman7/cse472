@@ -39,7 +39,9 @@ A comprehensive crime reporting and analysis platform built with Next.js, Expres
 - **Hugging Face** - Deepfake detection
 - **Custom AI Models** - Text analysis and sentiment detection
 
+
 ##  Prerequisites
+
 
 Before running this project, make sure you have the following installed:
 
@@ -47,7 +49,9 @@ Before running this project, make sure you have the following installed:
 - **npm** or **yarn** or **pnpm**
 - **Git**
 
-##  Quick Start
+
+## Quick Start
+
 
 ### 1. Clone the Repository
 
@@ -300,9 +304,4 @@ The application uses NextAuth.js for authentication with multiple providers:
 ## License
 
 This project is licensed under the MIT License.
-
-
-
----
-
 

@@ -78,8 +78,8 @@ const NavBar = () => {
   }, []);
 
   return (
-    <div className="bg-white/90 backdrop-blur-md border-b border-gray-200 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="bg-white/90 backdrop-blur-md border-b border-gray-200 sticky top-0 z-40">
+      <div className="w-full px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Left side - Logo and Hamburger menu */}
           <div className="flex items-center">

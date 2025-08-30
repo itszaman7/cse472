@@ -36,6 +36,7 @@ export default function RootLayout({ children }) {
           <UserProvider>
             <SearchProvider>
             <NotificationsProvider>
+            <NavBar />
             {children}
             <footer>
               <Footer />

@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import axios from "axios";
 import CrimeReportCard from "@/components/newsfeed/CrimeReport";
 import { Button } from '@/components/ui/button';
@@ -14,11 +14,13 @@ import {
   Users, 
   ArrowRight,
   MapPin,
-  Clock
+  Clock,
+  Filter,
+  Tag
 } from 'lucide-react';
 import Link from 'next/link';
 
-export default function SearchPage() {
+function SearchContent() {
   const sp = useSearchParams();
   const query = sp.get("q") || "";
   const [reports, setReports] = useState([]);
@@ -26,12 +28,15 @@ export default function SearchPage() {
   const [error, setError] = useState("");
   const [categories, setCategories] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
+  const [relatedCategories, setRelatedCategories] = useState([]);
+  const [popularSearches, setPopularSearches] = useState([]);
 
   useEffect(() => {
     const load = async () => {
       if (!query) {
         // Load popular categories when no search query
         loadPopularCategories();
+        loadPopularSearches();
         return;
       }
       
@@ -62,6 +67,21 @@ export default function SearchPage() {
         }));
         setReports(formatted);
         setSuggestions(res.data.suggestions || []);
+        
+        // Generate related categories from search results
+        const categoryCounts = {};
+        fetched.forEach(report => {
+          if (report.category) {
+            categoryCounts[report.category] = (categoryCounts[report.category] || 0) + 1;
+          }
+        });
+        
+        const related = Object.entries(categoryCounts)
+          .sort(([,a], [,b]) => b - a)
+          .slice(0, 6)
+          .map(([category, count]) => ({ category, count }));
+        setRelatedCategories(related);
+        
       } catch (e) {
         setError("Could not load posts.");
       } finally {
@@ -74,7 +94,7 @@ export default function SearchPage() {
   const loadPopularCategories = async () => {
     try {
       const res = await axios.get("http://localhost:5000/posts", { 
-        params: { limit: 1 } 
+        params: { limit: 100 } 
       });
       
       // Get unique categories from recent posts
@@ -89,12 +109,48 @@ export default function SearchPage() {
       
       const popularCategories = Object.entries(categoryCounts)
         .sort(([,a], [,b]) => b - a)
-        .slice(0, 8)
+        .slice(0, 12)
         .map(([category, count]) => ({ category, count }));
       
       setCategories(popularCategories);
     } catch (e) {
       console.error("Failed to load categories:", e);
+    }
+  };
+
+  const loadPopularSearches = async () => {
+    try {
+      const res = await axios.get("http://localhost:5000/posts", { 
+        params: { limit: 50 } 
+      });
+      
+      // Generate popular searches from recent posts
+      const searchTerms = [];
+      if (res.data.reports) {
+        res.data.reports.forEach(report => {
+          if (report.location) searchTerms.push(report.location);
+          if (report.category) searchTerms.push(report.category);
+          // Extract keywords from title
+          const words = report.title?.toLowerCase().split(/\s+/).filter(word => 
+            word.length > 3 && !['the', 'and', 'for', 'with', 'from'].includes(word)
+          ) || [];
+          searchTerms.push(...words.slice(0, 3));
+        });
+      }
+      
+      const termCounts = {};
+      searchTerms.forEach(term => {
+        termCounts[term] = (termCounts[term] || 0) + 1;
+      });
+      
+      const popular = Object.entries(termCounts)
+        .sort(([,a], [,b]) => b - a)
+        .slice(0, 8)
+        .map(([term, count]) => ({ term, count }));
+      
+      setPopularSearches(popular);
+    } catch (e) {
+      console.error("Failed to load popular searches:", e);
     }
   };
 
@@ -107,6 +163,9 @@ export default function SearchPage() {
     if (categoryLower.includes('harassment')) return '🚫';
     if (categoryLower.includes('traffic')) return '🚗';
     if (categoryLower.includes('drug')) return '💊';
+    if (categoryLower.includes('assault')) return '👊';
+    if (categoryLower.includes('burglary')) return '🏠';
+    if (categoryLower.includes('cyber')) return '💻';
     return '🚨';
   };
 
@@ -119,6 +178,9 @@ export default function SearchPage() {
     if (categoryLower.includes('harassment')) return 'bg-pink-100 text-pink-800 border-pink-200';
     if (categoryLower.includes('traffic')) return 'bg-blue-100 text-blue-800 border-blue-200';
     if (categoryLower.includes('drug')) return 'bg-green-100 text-green-800 border-green-200';
+    if (categoryLower.includes('assault')) return 'bg-red-100 text-red-800 border-red-200';
+    if (categoryLower.includes('burglary')) return 'bg-orange-100 text-orange-800 border-orange-200';
+    if (categoryLower.includes('cyber')) return 'bg-indigo-100 text-indigo-800 border-indigo-200';
     return 'bg-gray-100 text-gray-800 border-gray-200';
   };
 
@@ -143,14 +205,14 @@ export default function SearchPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
               {categories.map(({ category, count }) => (
                 <Link key={category} href={`/c/${encodeURIComponent(category)}`}>
                   <Card className="hover:shadow-lg transition-shadow cursor-pointer">
                     <CardContent className="p-4 text-center">
                       <div className="text-3xl mb-2">{getCategoryIcon(category)}</div>
-                      <h3 className="font-semibold text-gray-900 mb-1">c/{category}</h3>
-                      <Badge variant="outline" className={getCategoryColor(category)}>
+                      <h3 className="font-semibold text-gray-900 mb-1 text-sm">c/{category}</h3>
+                      <Badge variant="outline" className={`text-xs ${getCategoryColor(category)}`}>
                         {count} posts
                       </Badge>
                     </CardContent>
@@ -161,23 +223,48 @@ export default function SearchPage() {
           </CardContent>
         </Card>
 
+        {/* Popular Searches */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Search className="w-5 h-5 mr-2" />
+              Popular Searches
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {popularSearches.map(({ term, count }) => (
+                <Link key={term} href={`/search?q=${encodeURIComponent(term)}`}>
+                  <Button variant="ghost" className="w-full justify-between h-auto p-3">
+                    <div className="text-left">
+                      <div className="font-medium text-gray-900">{term}</div>
+                      <div className="text-xs text-gray-500">{count} results</div>
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-gray-400" />
+                  </Button>
+                </Link>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Quick Search Suggestions */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
-              <Search className="w-5 h-5 mr-2" />
+              <Filter className="w-5 h-5 mr-2" />
               Quick Search
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-3">
                 <h4 className="font-medium text-gray-700 flex items-center">
                   <Hash className="w-4 h-4 mr-2" />
                   Categories
                 </h4>
                 <div className="space-y-2">
-                  {['theft', 'violence', 'vandalism', 'fraud'].map(cat => (
+                  {['theft', 'violence', 'vandalism', 'fraud', 'harassment', 'traffic', 'drug', 'assault'].map(cat => (
                     <Link key={cat} href={`/c/${cat}`}>
                       <Button variant="ghost" className="w-full justify-between">
                         <span>c/{cat}</span>
@@ -193,7 +280,7 @@ export default function SearchPage() {
                   Locations
                 </h4>
                 <div className="space-y-2">
-                  {['Dhaka', 'Chittagong', 'Sylhet', 'Rajshahi'].map(location => (
+                  {['Dhaka', 'Chittagong', 'Sylhet', 'Rajshahi', 'Khulna', 'Barisal', 'Rangpur', 'Mymensingh'].map(location => (
                     <Link key={location} href={`/search?q=${encodeURIComponent(location)}`}>
                       <Button variant="ghost" className="w-full justify-between">
                         <span>{location}</span>
@@ -235,6 +322,28 @@ export default function SearchPage() {
                     className="cursor-pointer hover:bg-blue-50 hover:border-blue-300"
                   >
                     {suggestion.type === 'category' ? 'c/' : ''}{suggestion.value}
+                  </Badge>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Related Categories */}
+        {relatedCategories.length > 0 && (
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold mb-3 flex items-center">
+              <Tag className="w-5 h-5 mr-2" />
+              Related Categories:
+            </h3>
+            <div className="flex flex-wrap gap-2">
+              {relatedCategories.map(({ category, count }) => (
+                <Link key={category} href={`/c/${encodeURIComponent(category)}`}>
+                  <Badge 
+                    variant="outline" 
+                    className={`cursor-pointer hover:shadow-md transition-shadow ${getCategoryColor(category)}`}
+                  >
+                    c/{category} ({count})
                   </Badge>
                 </Link>
               ))}
@@ -333,5 +442,32 @@ export default function SearchPage() {
         )
       )}
     </main>
+  );
+}
+
+function SearchLoading() {
+  return (
+    <main className="mx-auto p-8 max-w-6xl">
+      <div className="text-center mb-12">
+        <h1 className="text-4xl font-bold text-gray-900 mb-4">
+          Search Crime Reports
+        </h1>
+        <p className="text-xl text-gray-600 mb-8">
+          Loading search functionality...
+        </p>
+      </div>
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
+        <span className="ml-3 text-gray-600">Loading...</span>
+      </div>
+    </main>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<SearchLoading />}>
+      <SearchContent />
+    </Suspense>
   );
 }
